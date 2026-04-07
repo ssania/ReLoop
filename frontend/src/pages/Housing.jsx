@@ -13,7 +13,7 @@
 // All filter state is local to this page because no other page needs it.
 
 import { useState } from 'react';
-import { housing } from '../data/mockData';
+import { useApp } from '../context/AppContext';
 import HousingCard from '../components/HousingCard';
 import HousingDetailModal from '../components/HousingDetailModal';
 
@@ -22,6 +22,7 @@ import HousingDetailModal from '../components/HousingDetailModal';
 const TABS = [['all', 'All areas'], ['close', 'Close to campus'], ['budget', 'Budget friendly'], ['map', 'Map view']];
 
 export default function Housing() {
+  const { housing } = useApp();
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
   const [rentFilter, setRentFilter] = useState('');

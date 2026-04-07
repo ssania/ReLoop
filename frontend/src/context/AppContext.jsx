@@ -1,37 +1,76 @@
 // ── Global application state ──────────────────────────────────────────────────
-// AppContext is the single source of truth for data that multiple components
-// need to share:
-//   • listings   – array of marketplace items (seeded from mockData, new items prepended)
-//   • savedIds   – Set of listing IDs the user has heart-saved
+// AppContext is the single source of truth for data shared across components:
+//   • listings   – marketplace items fetched from GET /api/listings
+//   • housing    – neighbourhood data fetched from GET /api/housing
+//   • savedIds   – Set of listing IDs the user has heart-saved (client-only)
 //   • toast      – current notification state { msg, icon, visible }
 //
-// All mutations are exposed as stable callbacks (useCallback) so child
-// components won't re-render just because the parent re-renders.
+// On mount, AppProvider fetches both /api/listings and /api/housing from the
+// Express backend (localhost:5000). New listings are POST-ed to the backend
+// and then prepended to local state so the UI updates instantly.
 
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { initialListings } from '../data/mockData';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
-// Create the context with null as the default so useApp() can detect misuse
-// (calling useApp() outside of AppProvider throws a descriptive error).
+// Base URL for all API calls. In production this would be an env variable
+// pointing to the deployed backend (e.g. https://api.reloop.com).
+const API = 'http://localhost:5000/api';
+
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  // listings: starts from mock data; new items are prepended via addListing.
-  const [listings, setListings] = useState(initialListings);
+  // listings: fetched from the backend; starts empty until the first fetch resolves.
+  const [listings, setListings] = useState([]);
 
-  // savedIds: a Set of numeric IDs. We always create a new Set on mutation so
-  // React detects the reference change and triggers a re-render.
+  // housing: fetched from the backend; used by the Housing page.
+  const [housing, setHousing] = useState([]);
+
+  // loading: true while the initial data fetch is in flight.
+  const [loading, setLoading] = useState(true);
+
+  // savedIds: client-side only Set of numeric IDs the user has saved.
+  // When auth + backend are ready this would persist to the DB per user.
   const [savedIds, setSavedIds] = useState(new Set());
 
-  // toast: controls the floating notification bar rendered by <Toast />.
+  // toast: drives the <Toast /> overlay component.
   const [toast, setToast] = useState({ msg: '', icon: '✓', visible: false });
 
-  // useRef keeps the timer ID across renders without causing extra re-renders.
+  // useRef stores the timer ID without triggering re-renders on change.
   const toastTimer = useRef(null);
 
-  // showToast: display a message for 2.8 s then hide it.
-  // clearTimeout before setting a new timer handles rapid successive calls
-  // (e.g. quickly saving/unsaving an item) without leaving stale timers.
+  // ── Initial data fetch ───────────────────────────────────────────────────────
+  // Runs once on mount. Fetches listings and housing in parallel so both are
+  // ready at roughly the same time.
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [listRes, housingRes] = await Promise.all([
+          fetch(`${API}/listings`),
+          fetch(`${API}/housing`),
+        ]);
+
+        // Parse both JSON responses concurrently.
+        const [listData, housingData] = await Promise.all([
+          listRes.json(),
+          housingRes.json(),
+        ]);
+
+        setListings(listData);
+        setHousing(housingData);
+      } catch (err) {
+        // If the backend is not running, log the error and leave arrays empty.
+        // The UI will show empty states instead of crashing.
+        console.error('Failed to fetch data from backend:', err);
+      } finally {
+        // Always clear the loading flag so the UI renders even on error.
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []); // empty dep array = run once on mount
+
+  // showToast: display a message for 2.8 s then hide.
+  // clearTimeout before setting prevents stale timers on rapid calls.
   const showToast = useCallback((msg, icon = '✓') => {
     setToast({ msg, icon, visible: true });
     clearTimeout(toastTimer.current);
@@ -39,11 +78,10 @@ export function AppProvider({ children }) {
   }, []);
 
   // toggleSave: add or remove an ID from the savedIds Set.
-  // Using the functional updater form of setSavedIds ensures we always read
-  // the latest Set even if multiple toggles fire in quick succession.
+  // new Set(prev) clones so React detects the reference change.
   const toggleSave = useCallback((id) => {
     setSavedIds(prev => {
-      const next = new Set(prev); // clone to trigger re-render
+      const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
         showToast('Removed from saved', '🗑️');
@@ -55,21 +93,41 @@ export function AppProvider({ children }) {
     });
   }, [showToast]);
 
-  // addListing: prepend a newly created listing so it appears first in the list.
-  const addListing = useCallback((item) => {
-    setListings(prev => [item, ...prev]);
+  // addListing: POST the new listing to the backend, then prepend the returned
+  // object (which has a server-assigned id) to local state.
+  const addListing = useCallback(async (item) => {
+    try {
+      const res = await fetch(`${API}/listings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      const created = await res.json(); // backend returns the created listing with its id
+      // Prepend so it appears at the top of the marketplace list immediately.
+      setListings(prev => [created, ...prev]);
+    } catch (err) {
+      console.error('Failed to create listing:', err);
+      showToast('Could not save listing', '⚠️');
+    }
+  }, [showToast]);
+
+  // updateListing: replace a listing in local state by id with the edited fields.
+  // When MongoDB is connected this will also PATCH /api/listings/:id.
+  const updateListing = useCallback((id, changes) => {
+    setListings(prev => prev.map(l => l.id === id ? { ...l, ...changes } : l));
   }, []);
 
   return (
-    // Expose all state and mutators through context value.
-    <AppContext.Provider value={{ listings, addListing, savedIds, toggleSave, showToast, toast }}>
+    <AppContext.Provider value={{
+      listings, housing, loading,
+      addListing, updateListing, savedIds, toggleSave, showToast, toast,
+    }}>
       {children}
     </AppContext.Provider>
   );
 }
 
-// useApp: convenience hook – import this instead of useContext(AppContext)
-// directly in every consumer component.
+// useApp: convenience hook so consumers don't need to import useContext too.
 export function useApp() {
   return useContext(AppContext);
 }

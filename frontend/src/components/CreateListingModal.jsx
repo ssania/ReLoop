@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { EMOJI } from '../data/mockData';
+import { EMOJI } from '../data/constants';
 
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
 const CATEGORIES = ['Furniture', 'Textbooks', 'Electronics', 'Clothing', 'Appliances', 'Sports', 'Other'];
@@ -54,11 +54,12 @@ export default function CreateListingModal({ onClose }) {
       cond,
       status: 'Available',        // all new listings start as Available
       desc: desc || 'No description provided.',
-      seller: 'Alex J.',          // hardcoded until auth is implemented
-      init: 'AJ',
+      seller: 'John Doe',         // hardcoded until auth is implemented
+      init: 'JD',
       rating: 5.0,
       tags: [cat, cond],
       posted: 'Just now',
+      ownedByUser: true,          // flag so Profile page knows this belongs to the current user
     });
 
     showToast('Listing posted!', '🎉');

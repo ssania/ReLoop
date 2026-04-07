@@ -10,7 +10,7 @@
 //             which opens DetailModal in the parent page
 
 import { useApp } from '../context/AppContext';
-import { IMG_BG } from '../data/mockData';
+import { IMG_BG } from '../data/constants';
 
 // statusClass: maps a listing's status string to the CSS class that controls
 // the coloured dot + text in the top-left badge of the image area.

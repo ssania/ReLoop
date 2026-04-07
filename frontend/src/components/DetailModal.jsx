@@ -15,7 +15,7 @@
 
 import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { IMG_BG } from '../data/mockData';
+import { IMG_BG } from '../data/constants';
 
 // statusClass: returns the CSS class name for the coloured status badge.
 function statusClass(s) {

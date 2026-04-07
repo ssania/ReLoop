@@ -1,49 +1,9 @@
-// ── Mock data ─────────────────────────────────────────────────────────────────
-// This file is the only data source while the backend/MongoDB integration is
-// pending. When the API is ready, these exports will be replaced by fetched
-// data and this file can be removed or kept for tests/Storybook.
+// ── Backend mock data ──────────────────────────────────────────────────────────
+// This is the single source of truth for seed data while MongoDB is not yet
+// connected. When MongoDB is wired up, replace these arrays with Mongoose
+// model queries (e.g. Listing.find({})) and delete this file.
 
-// EMOJI: maps a listing category to its display emoji.
-// Used in CardA and CreateListingModal to set item.emoji when a new listing
-// is created without an uploaded photo.
-export const EMOJI = {
-  Furniture: '🛋️',
-  Textbooks: '📚',
-  Electronics: '💻',
-  Clothing: '👗',
-  Appliances: '🍳',
-  Sports: '🚴',
-  Other: '📦',
-};
-
-// IMG_BG: maps a listing category to a CSS gradient string.
-// Used as the background of the card image area when no real photo exists.
-export const IMG_BG = {
-  Furniture: 'linear-gradient(135deg,#f5ede2,#e8d8c4)',
-  Textbooks: 'linear-gradient(135deg,#edf5e8,#cce4c4)',
-  Electronics: 'linear-gradient(135deg,#e8f0f5,#ccdcec)',
-  Clothing: 'linear-gradient(135deg,#f5e8f5,#e0c8e0)',
-  Appliances: 'linear-gradient(135deg,#f5f0e8,#e8e0cc)',
-  Sports: 'linear-gradient(135deg,#e8f5e8,#c4e0c4)',
-  Other: 'linear-gradient(135deg,#f0f0f0,#e0e0e0)',
-};
-
-// initialListings: seed data loaded into AppContext on first render.
-// Each object matches the shape expected by CardA and DetailModal:
-//   id       – unique numeric identifier (real IDs will come from MongoDB _id)
-//   emoji    – display emoji (falls back to EMOJI[cat] when creating)
-//   cat      – category string, must match a key in EMOJI / IMG_BG
-//   title    – listing title shown on the card
-//   price    – numeric price in USD
-//   cond     – one of: 'New' | 'Like New' | 'Good' | 'Fair'
-//   status   – one of: 'Available' | 'In-talk' | 'Sold'
-//   desc     – full description shown in the detail modal
-//   seller   – seller display name
-//   init     – seller initials (2 chars) used in the avatar circle
-//   rating   – seller rating (float, 1–5)
-//   tags     – string array for the tag pills in the detail modal
-//   posted   – human-readable post date string
-export const initialListings = [
+const initialListings = [
   {
     id: 1, emoji: '🛋️', cat: 'Furniture',
     title: 'IKEA KALLAX Shelf 4×4 – White',
@@ -110,22 +70,7 @@ export const initialListings = [
   },
 ];
 
-// housing: static data for the six Amherst neighbourhoods shown in Housing.jsx.
-// Each object matches the shape expected by HousingCard and HousingDetailModal:
-//   id           – unique numeric identifier
-//   emoji / type – display emoji and category label
-//   name         – neighbourhood name
-//   dist         – distance range from UMass campus (string)
-//   rentMin/Max  – monthly rent range in USD (used for filter logic)
-//   desc         – longer description shown in the detail modal
-//   amenities    – array of amenity strings
-//   bus          – PVTA bus route strings (e.g. 'PVTA #31')
-//   walk         – estimated walk time to campus
-//   rating       – area rating (float, 1–5)
-//   reviews      – number of student reviews
-//   floorPlans   – array of floor plan description strings
-//   reviews_list – array of { author, stars, date, text } student review objects
-export const housing = [
+const housing = [
   {
     id: 101, emoji: '🏙️', type: 'Downtown',
     name: 'Downtown Amherst', dist: '0.3 – 0.8 mi from campus',
@@ -188,10 +133,10 @@ export const housing = [
   },
 ];
 
-// myReviews: static reviews shown on the Profile page under the "Reviews" tab.
-// In the real app these will be fetched from the backend for the logged-in user.
-export const myReviews = [
+const myReviews = [
   { from: 'Maria G.', init: 'MG', stars: 5, text: 'Super easy transaction. Item exactly as described. Very responsive and friendly.', date: 'March 2025' },
   { from: 'Dev P.', init: 'DP', stars: 5, text: 'Great seller – very responsive. Item was in perfect condition.', date: 'Feb 2025' },
   { from: 'Sam L.', init: 'SL', stars: 4, text: 'Good transaction, showed up on time. Item matched the photos.', date: 'Jan 2025' },
 ];
+
+module.exports = { initialListings, housing, myReviews };
