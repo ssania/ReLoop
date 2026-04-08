@@ -1,0 +1,5 @@
+# ignore node_modules anywhere
+node_modules/
+
+# ignore database .env
+database/.env
