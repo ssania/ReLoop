@@ -1,1 +1,0 @@
-- This folder will contain the Frontend code for the Reloop web application.
