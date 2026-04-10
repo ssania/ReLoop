@@ -4,7 +4,7 @@
 // selectedH and open HousingDetailModal.
 //
 // Props:
-//   h       – a housing object from the housing array in mockData.js
+//   h       – a housing object from AppContext.housing (fetched from GET /api/housing)
 //   onClick – parent callback; receives the full housing object
 
 export default function HousingCard({ h, onClick }) {

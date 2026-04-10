@@ -4,7 +4,7 @@
 // a map placeholder, and student reviews.
 //
 // Props:
-//   h       – a housing object from mockData.housing
+//   h       – a housing object from AppContext.housing (fetched from GET /api/housing)
 //   onClose – clears selectedH in Housing.jsx (unmounts this modal)
 //
 // Body-scroll lock and backdrop-click-to-close follow the same pattern as
