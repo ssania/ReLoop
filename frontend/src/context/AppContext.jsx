@@ -6,14 +6,14 @@
 //   • toast      – current notification state { msg, icon, visible }
 //
 // On mount, AppProvider fetches both /api/listings and /api/housing from the
-// Express backend (localhost:5000). New listings are POST-ed to the backend
+// Express backend (localhost:5002). New listings are POST-ed to the backend
 // and then prepended to local state so the UI updates instantly.
 
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
 // Base URL for all API calls. In production this would be an env variable
 // pointing to the deployed backend (e.g. https://api.reloop.com).
-const API = 'http://localhost:5000/api';
+const API = 'http://localhost:5002/api';
 
 const AppContext = createContext(null);
 

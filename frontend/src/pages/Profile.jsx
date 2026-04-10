@@ -32,7 +32,7 @@ export default function Profile() {
 
   // Fetch this user's received reviews from the backend on mount.
   useEffect(() => {
-    fetch('http://localhost:5000/api/reviews')
+    fetch('http://localhost:5002/api/reviews')
       .then(res => res.json())
       .then(data => setMyReviews(data))
       .catch(err => console.error('Failed to fetch reviews:', err));
