@@ -8,7 +8,15 @@ const housingAreaSchema = new mongoose.Schema({
   rent_max:    { type: Number },
   amenities:   [String],
   bus_routes:  [String],
-  floor_plans: [String],
+  image_urls: [{
+  url: { type: String, required: true },
+  key: { type: String, required: true },
+}],
+
+floor_plan_urls: [{
+  url: { type: String, required: true },
+  key: { type: String, required: true },
+}],
   coordinates: { lat: Number, lng: Number },
   avg_rating:  { type: Number, default: 0 },
 }, { timestamps: true });
