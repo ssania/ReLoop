@@ -1,16 +1,10 @@
-// ── Review routes ──────────────────────────────────────────────────────────────
-// GET /api/reviews   → return the current user's received reviews
-//
-// NOTE: hardcoded to "Alex J." (the mock logged-in user) for now.
-// When auth is added, filter by req.user._id from the JWT middleware.
+// ── Review routes ───────────────────────────────────────────────────────────
+// GET /api/reviews  → reviewController.getReviews
 
 const express = require('express');
 const router = express.Router();
-const { myReviews } = require('../data/mockData');
+const { getReviews } = require('../controllers/reviewController');
 
-// GET /api/reviews
-router.get('/', (req, res) => {
-  res.json(myReviews);
-});
+router.get('/', getReviews);
 
 module.exports = router;
