@@ -15,7 +15,6 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import CardA from '../components/CardA';
 import DetailModal from '../components/DetailModal';
-import CreateListingModal from '../components/CreateListingModal';
 
 // Category pill definitions: [filterKey, displayLabel].
 const CATS = [
@@ -39,9 +38,6 @@ export default function Marketplace() {
 
   // selectedItem: null when no detail modal is open.
   const [selectedItem, setSelectedItem] = useState(null);
-
-  // createOpen: controls visibility of the CreateListingModal.
-  const [createOpen, setCreateOpen] = useState(false);
 
   // Derived filtered list – all filters are AND-ed together.
   const list = listings.filter(m => {
@@ -74,11 +70,6 @@ export default function Marketplace() {
               Buy and sell within the Five College community. Every seller is a verified student.
             </p>
           </div>
-          {/* "Create listing" CTA – opens the CreateListingModal. */}
-          <button className="btn btn-dark rounded-3 d-flex align-items-center gap-2 mt-2" style={{ fontSize: '13px', padding: '10px 20px', flexShrink: 0 }} onClick={() => setCreateOpen(true)}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="white" strokeWidth="1.6" strokeLinecap="round" /></svg>
-            Create listing
-          </button>
         </div>
 
         {/* Status tab bar – negative margin expands it to full-bleed. */}
@@ -152,9 +143,8 @@ export default function Marketplace() {
         </div>
       </div>
 
-      {/* Modals – each mounts only when its trigger state is non-null/true. */}
+      {/* Modals – mounts only when a card is selected. */}
       {selectedItem && <DetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
-      {createOpen && <CreateListingModal onClose={() => setCreateOpen(false)} />}
     </>
   );
 }

@@ -16,6 +16,7 @@ import { useApp } from '../context/AppContext';
 import CardA from '../components/CardA';
 import DetailModal from '../components/DetailModal';
 import EditListingModal from '../components/EditListingModal';
+import CreateListingModal from '../components/CreateListingModal';
 
 // Inline confirmation modal — shown before permanently deleting a listing.
 function DeleteConfirmModal({ item, onConfirm, onCancel }) {
@@ -72,6 +73,9 @@ export default function Profile() {
   // deleteItem: opens DeleteConfirmModal when the Delete button is clicked.
   const [deleteItem, setDeleteItem] = useState(null);
 
+  // createOpen: controls visibility of the CreateListingModal.
+  const [createOpen, setCreateOpen] = useState(false);
+
   // Fetch this user's received reviews from the backend on mount.
   useEffect(() => {
     fetch('http://localhost:5002/api/reviews')
@@ -98,13 +102,24 @@ export default function Profile() {
     <>
       {/* ── PROFILE HERO ─────────────────────────────────────────────────── */}
       <div className="bg-white border-bottom" style={{ padding: 'clamp(24px,4vw,40px) clamp(16px,4vw,40px)' }}>
-        <div className="d-flex align-items-center flex-wrap gap-4" style={{ maxWidth: '1160px', margin: '0 auto' }}>
-          <div className="profile-avatar">JD</div>
-          <div>
-            <div style={{ fontFamily: 'Syne,sans-serif', fontSize: 'clamp(18px,4vw,24px)', fontWeight: 800, letterSpacing: '-.5px' }}>John Doe</div>
-            <div style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)', marginTop: '3px' }}>johndoe@umass.edu</div>
-            <div className="verified-badge">✓ Verified UMass Student</div>
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-4" style={{ maxWidth: '1160px', margin: '0 auto' }}>
+          <div className="d-flex align-items-center gap-4">
+            <div className="profile-avatar">JD</div>
+            <div>
+              <div style={{ fontFamily: 'Syne,sans-serif', fontSize: 'clamp(18px,4vw,24px)', fontWeight: 800, letterSpacing: '-.5px' }}>John Doe</div>
+              <div style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)', marginTop: '3px' }}>johndoe@umass.edu</div>
+              <div className="verified-badge">✓ Verified UMass Student</div>
+            </div>
           </div>
+          {/* "Create listing" CTA – mirrors the same button in Marketplace. */}
+          <button
+            className="btn btn-dark rounded-3 d-flex align-items-center gap-2"
+            style={{ fontSize: '13px', padding: '10px 20px', flexShrink: 0 }}
+            onClick={() => setCreateOpen(true)}
+          >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="white" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            Create listing
+          </button>
         </div>
       </div>
 
@@ -171,7 +186,7 @@ export default function Profile() {
               <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📦</div>
               <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '16px' }}>No listings yet</div>
               <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)' }}>
-                Go to the <strong>Marketplace</strong> and hit "Create listing" to post your first item.
+                Hit <strong>"Create listing"</strong> above to post your first item.
               </p>
             </div>
           )
@@ -242,6 +257,9 @@ export default function Profile() {
           }}
         />
       )}
+
+      {/* CreateListingModal — opened from the hero button; stays on Profile after submit. */}
+      {createOpen && <CreateListingModal onClose={() => setCreateOpen(false)} />}
     </>
   );
 }

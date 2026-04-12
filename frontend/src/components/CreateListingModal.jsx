@@ -1,28 +1,32 @@
 // ── Create listing modal ──────────────────────────────────────────────────────
 // Controlled form that lets a verified student post a new marketplace item.
-// Opened by the "Create listing" button in the Marketplace page hero.
+// Opened by the "Create listing" button in the Profile page.
 //
 // Props:
-//   onClose – closes the modal (clears createOpen state in Marketplace.jsx)
+//   onClose      – closes the modal
+//   redirectTo   – optional path to navigate to after a successful submit
+//                  (e.g. '/profile'). When omitted, stays on the current page.
 //
 // On submit:
 //   1. Validates that title and price are filled in.
 //   2. Calls AppContext.addListing() to prepend the new item to the global
-//      listings array so it appears immediately in the Marketplace grid.
-//   3. Fires a success toast and calls onClose().
+//      listings array so it appears immediately in any grid.
+//   3. Fires a success toast, calls onClose(), then navigates to redirectTo.
 //
 // All form fields are controlled (value + onChange) to keep React as the
 // single source of truth and enable straightforward validation.
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { EMOJI } from '../data/constants';
 
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
 const CATEGORIES = ['Furniture', 'Textbooks', 'Electronics', 'Clothing', 'Appliances', 'Sports', 'Other'];
 
-export default function CreateListingModal({ onClose }) {
+export default function CreateListingModal({ onClose, redirectTo }) {
   const { addListing, showToast } = useApp();
+  const navigate = useNavigate();
 
   // Controlled form state.
   const [title, setTitle] = useState('');
@@ -64,6 +68,7 @@ export default function CreateListingModal({ onClose }) {
 
     showToast('Listing posted!', '🎉');
     onClose();
+    if (redirectTo) navigate(redirectTo);
   }
 
   return (
