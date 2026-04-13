@@ -1,15 +1,34 @@
 // ── Review Model ────────────────────────────────────────────────────────────
-// Owns the reviews data.
-// When auth is added, filter by user id instead of returning all reviews.
-// When MongoDB is connected we will replace with: Review.find({ userId: req.user._id })
+
+// ============================================================
+// SECTION 1 — MONGOOSE SCHEMA (used when MongoDB is connected)
+// ============================================================
+
+const mongoose = require('mongoose');
+
+const reviewSchema = new mongoose.Schema({
+  reviewer:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  targetUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  listingRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing' },
+  stars:      { type: Number, min: 1, max: 5, required: true },
+  comment:    { type: String },
+}, { timestamps: true });
+
+// Exported so seed.js can use it directly.
+const ReviewMongoose = mongoose.model('Review', reviewSchema);
+
+// ============================================================
+// SECTION 2 — MOCK WRAPPER (active while MongoDB is not connected)
+// ============================================================
 
 const { myReviews } = require('../data/mockData');
 
 const ReviewModel = {
-  // Return all reviews (currently hardcoded to mock user "Alex J.")
+  // MongoDB: return ReviewMongoose.find({ targetUser: req.user._id }).populate('reviewer', 'name');
   getAll() {
     return myReviews;
   },
 };
 
 module.exports = ReviewModel;
+module.exports.ReviewMongoose = ReviewMongoose;

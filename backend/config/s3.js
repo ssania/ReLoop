@@ -20,14 +20,12 @@ const uploadListingImage = multer({
     bucket: process.env.S3_BUCKET_NAME,
     metadata: (req, file, cb) => cb(null, { fieldName: file.fieldname }),
     key: (req, file, cb) => {
-      // Creates a unique filename like: listings/uuid.jpg
       const ext = file.originalname.split('.').pop();
       cb(null, `listings/${uuidv4()}.${ext}`);
     }
   }),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max per image
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    // Only allow image files
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Only image files allowed!'), false);
   }
@@ -41,7 +39,7 @@ const uploadHousingImage = multer({
     metadata: (req, file, cb) => cb(null, { fieldName: file.fieldname }),
     key: (req, file, cb) => {
       const ext = file.originalname.split('.').pop();
-      cb(null, `housing/${uuidv4()}.${ext}`); // stored in housing/ folder
+      cb(null, `housing/${uuidv4()}.${ext}`);
     }
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
