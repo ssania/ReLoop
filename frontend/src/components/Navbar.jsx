@@ -49,8 +49,8 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Desktop CTA – takes the user to the Marketplace to create a listing. */}
-        <button className="btn btn-dark rounded-3 d-none d-lg-block" style={{ fontSize: '13px', padding: '9px 20px' }} onClick={() => navigate('/marketplace')}>
+        {/* Desktop CTA – takes the user to their Profile to create a listing. */}
+        <button className="btn btn-dark rounded-3 d-none d-lg-block" style={{ fontSize: '13px', padding: '9px 20px' }} onClick={() => navigate('/profile')}>
           + List Item
         </button>
 

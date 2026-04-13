@@ -12,6 +12,7 @@
 
 import { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { formatDate } from '../data/constants';
 
 export default function HousingDetailModal({ h, onClose }) {
   // showToast is used for the "Contact area managers" button at the bottom.
@@ -59,13 +60,13 @@ export default function HousingDetailModal({ h, onClose }) {
 
             {/* About – full neighbourhood description paragraph. */}
             <Section title="About this area">
-              <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.8 }}>{h.desc}</p>
+              <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.8 }}>{h.description}</p>
             </Section>
 
             {/* Key info – 4 stat tiles in a 2-column Bootstrap grid. */}
             <Section title="Key info">
               <div className="row g-2">
-                {[['Distance', h.dist], ['Walk to campus', h.walk], ['Area rating', `⭐ ${h.rating.toFixed(1)} (${h.reviews} reviews)`], ['Typical type', h.type]].map(([label, val]) => (
+                {[['Distance', h.distance], ['Rent range', `$${h.rentMin.toLocaleString()} – $${h.rentMax.toLocaleString()}/mo`], ['Area rating', `⭐ ${h.averageRating.toFixed(1)} (${h.reviewCount} reviews)`], ['Typical type', h.type]].map(([label, val]) => (
                   <div key={label} className="col-6">
                     <div className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                       <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '9px', letterSpacing: '1px', color: 'var(--muted)' }}>{label}</div>
@@ -76,14 +77,15 @@ export default function HousingDetailModal({ h, onClose }) {
               </div>
             </Section>
 
-            {/* Floor plans – each plan in its own tile. */}
+            {/* Floor plans – renders S3 images when available; placeholder shown until images are uploaded. */}
             <Section title="Floor plans available">
               <div className="row g-2">
-                {h.floorPlans.map(fp => (
-                  <div key={fp} className="col-12 col-sm-6">
-                    <div className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
-                      <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '9px', letterSpacing: '1px', color: 'var(--muted)' }}>Option</div>
-                      <div className="fw-medium" style={{ fontSize: '13px' }}>{fp}</div>
+                {h.floorPlanUrls.map(fp => (
+                  <div key={fp.key} className="col-12 col-sm-6">
+                    {/* TODO: replace placeholder with <img src={fp.url} /> once floor plan images are uploaded to S3 */}
+                    <div className="p-3 rounded-3 d-flex align-items-center justify-content-center"
+                      style={{ background: 'var(--sand)', border: '1px solid var(--sand3)', height: '100px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--muted)' }}>🖼️ Floor plan image</span>
                     </div>
                   </div>
                 ))}
@@ -102,7 +104,7 @@ export default function HousingDetailModal({ h, onClose }) {
             {/* Bus routes – same sage-green style with bus emoji. */}
             <Section title="Bus routes to UMass">
               <div className="d-flex flex-wrap gap-2">
-                {h.bus.map(b => (
+                {h.busRoutes.map(b => (
                   <span key={b} className="badge rounded-pill px-3 py-2 fw-semibold" style={{ background: 'var(--sage-bg)', color: 'var(--sage)', border: '1px solid var(--sage-bd)', fontSize: '11px' }}>🚌 {b}</span>
                 ))}
               </div>
@@ -124,16 +126,16 @@ export default function HousingDetailModal({ h, onClose }) {
               <p className="mt-2 mb-0" style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 300 }}>Full interactive map with Google Maps integration coming in the live version.</p>
             </Section>
 
-            {/* Student reviews – pulled from h.reviews_list. */}
+            {/* Student reviews – pulled from h.housingReviews. */}
             <Section title="Student reviews">
               <div className="d-flex flex-column gap-2">
-                {h.reviews_list.map((r, i) => (
+                {h.housingReviews.map((r, i) => (
                   <div key={i} className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                     <div className="d-flex align-items-center justify-content-between mb-2">
-                      <span className="fw-medium" style={{ fontSize: '12px' }}>{r.author}</span>
-                      <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{r.date} · {'⭐'.repeat(r.stars)}</span>
+                      <span className="fw-medium" style={{ fontSize: '12px' }}>{r.reviewer.name}</span>
+                      <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{formatDate(r.createdAt)} · {'⭐'.repeat(r.stars)}</span>
                     </div>
-                    <p className="mb-0" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.6 }}>{r.text}</p>
+                    <p className="mb-0" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.6 }}>{r.comment}</p>
                   </div>
                 ))}
               </div>

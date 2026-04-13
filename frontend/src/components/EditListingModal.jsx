@@ -18,12 +18,12 @@ export default function EditListingModal({ item, onClose }) {
   const { updateListing, showToast } = useApp();
 
   // Pre-fill all fields from the existing listing.
-  const [title, setTitle] = useState(item.title);
-  const [cat, setCat] = useState(item.cat);
-  const [price, setPrice] = useState(String(item.price));
-  const [cond, setCond] = useState(item.cond);
-  const [status, setStatus] = useState(item.status);
-  const [desc, setDesc] = useState(item.desc);
+  const [title, setTitle]         = useState(item.title);
+  const [category, setCategory]   = useState(item.category);
+  const [price, setPrice]         = useState(String(item.price));
+  const [condition, setCondition] = useState(item.condition);
+  const [status, setStatus]       = useState(item.status);
+  const [description, setDescription] = useState(item.description);
 
   // Lock body scroll while modal is open; restore on unmount.
   useEffect(() => {
@@ -41,12 +41,12 @@ export default function EditListingModal({ item, onClose }) {
     // ownedByUser is preserved from the original item (not overwritten here).
     updateListing(item.id, {
       title: title.trim(),
-      cat,
+      category,
       price: +price,
-      cond,
+      condition,
       status,
-      desc: desc || 'No description provided.',
-      tags: [cat, cond],
+      description: description || 'No description provided.',
+      tags: [category, condition],
     });
 
     showToast('Listing updated!', '✏️');
@@ -83,7 +83,7 @@ export default function EditListingModal({ item, onClose }) {
             <div className="row g-3">
               <div className="col">
                 <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Category</label>
-                <select className="form-select" value={cat} onChange={e => setCat(e.target.value)}>
+                <select className="form-select" value={category} onChange={e => setCategory(e.target.value)}>
                   {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
@@ -98,7 +98,7 @@ export default function EditListingModal({ item, onClose }) {
               <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Condition</label>
               <div className="d-flex flex-wrap gap-2">
                 {CONDITIONS.map(c => (
-                  <span key={c} className={`cond-opt${cond === c ? ' on' : ''}`} onClick={() => setCond(c)}>{c}</span>
+                  <span key={c} className={`cond-opt${condition === c ? ' on' : ''}`} onClick={() => setCondition(c)}>{c}</span>
                 ))}
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function EditListingModal({ item, onClose }) {
             {/* Description */}
             <div>
               <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Description</label>
-              <textarea className="form-control" rows={3} value={desc} onChange={e => setDesc(e.target.value)} />
+              <textarea className="form-control" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
             </div>
 
             {/* Save button */}

@@ -15,7 +15,6 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import CardA from '../components/CardA';
 import DetailModal from '../components/DetailModal';
-import CreateListingModal from '../components/CreateListingModal';
 
 // Category pill definitions: [filterKey, displayLabel].
 const CATS = [
@@ -40,21 +39,18 @@ export default function Marketplace() {
   // selectedItem: null when no detail modal is open.
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // createOpen: controls visibility of the CreateListingModal.
-  const [createOpen, setCreateOpen] = useState(false);
-
   // Derived filtered list – all filters are AND-ed together.
   const list = listings.filter(m => {
     // Category filter – skip if 'all' is selected.
-    if (cat !== 'all' && m.cat !== cat) return false;
+    if (cat !== 'all' && m.category !== cat) return false;
     // Status tab filter: normalise "In-talk" → "intalk" for comparison.
     if (mktTab !== 'all' && m.status.toLowerCase().replace('-', '') !== mktTab) return false;
     // Text search across title and description (case-insensitive).
-    if (search && !m.title.toLowerCase().includes(search.toLowerCase()) && !m.desc.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !m.title.toLowerCase().includes(search.toLowerCase()) && !m.description.toLowerCase().includes(search.toLowerCase())) return false;
     // Price ceiling – convert the string filter value to a number for comparison.
     if (priceFilter && m.price > +priceFilter) return false;
     // Condition exact-match.
-    if (condFilter && m.cond !== condFilter) return false;
+    if (condFilter && m.condition !== condFilter) return false;
     return true;
   });
 
@@ -71,14 +67,9 @@ export default function Marketplace() {
             </div>
             <h4 style={{ fontFamily: 'Syne,sans-serif', fontWeight: 800, letterSpacing: '-1px', marginBottom: '6px' }}>Student Marketplace</h4>
             <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.7, maxWidth: '520px' }}>
-              Buy and sell within the Five College community. Every seller is a verified student.
+              Buy and sell within the UMass community. Every seller is a verified student.
             </p>
           </div>
-          {/* "Create listing" CTA – opens the CreateListingModal. */}
-          <button className="btn btn-dark rounded-3 d-flex align-items-center gap-2 mt-2" style={{ fontSize: '13px', padding: '10px 20px', flexShrink: 0 }} onClick={() => setCreateOpen(true)}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="white" strokeWidth="1.6" strokeLinecap="round" /></svg>
-            Create listing
-          </button>
         </div>
 
         {/* Status tab bar – negative margin expands it to full-bleed. */}
@@ -152,9 +143,8 @@ export default function Marketplace() {
         </div>
       </div>
 
-      {/* Modals – each mounts only when its trigger state is non-null/true. */}
+      {/* Modals – mounts only when a card is selected. */}
       {selectedItem && <DetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
-      {createOpen && <CreateListingModal onClose={() => setCreateOpen(false)} />}
     </>
   );
 }

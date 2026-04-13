@@ -117,10 +117,23 @@ export function AppProvider({ children }) {
     setListings(prev => prev.map(l => l.id === id ? { ...l, ...changes } : l));
   }, []);
 
+  // deleteListing: DELETE /api/listings/:id then remove from local state.
+  const deleteListing = useCallback(async (id) => {
+    try {
+      await fetch(`${API}/listings/${id}`, { method: 'DELETE' });
+      setListings(prev => prev.filter(l => l.id !== id));
+      // Also remove from savedIds if it was saved.
+      setSavedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+    } catch (err) {
+      console.error('Failed to delete listing:', err);
+      showToast('Could not delete listing', '⚠️');
+    }
+  }, [showToast]);
+
   return (
     <AppContext.Provider value={{
       listings, housing, loading,
-      addListing, updateListing, savedIds, toggleSave, showToast, toast,
+      addListing, updateListing, deleteListing, savedIds, toggleSave, showToast, toast,
     }}>
       {children}
     </AppContext.Provider>

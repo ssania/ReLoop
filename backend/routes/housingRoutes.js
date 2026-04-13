@@ -1,17 +1,10 @@
-// ── Housing routes ─────────────────────────────────────────────────────────────
-// GET /api/housing   → return all housing neighbourhood data
-//
-// NOTE: data comes from the mock array for now.
-// When MongoDB is connected, replace with: Housing.find({})
+// ── Housing routes ──────────────────────────────────────────────────────────
+// GET /api/housing  → housingController.getHousing
 
 const express = require('express');
 const router = express.Router();
-const { housing } = require('../data/mockData');
+const { getHousing } = require('../controllers/housingController');
 
-// GET /api/housing
-// Returns the full housing array as JSON.
-router.get('/', (req, res) => {
-  res.json(housing);
-});
+router.get('/', getHousing);
 
 module.exports = router;
