@@ -46,7 +46,7 @@ export default function Home() {
           {/* Eyebrow tag pill above the headline. */}
           <div className="d-inline-flex align-items-center gap-2 bg-white border rounded-pill px-3 py-1 mb-4">
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--terra)', flexShrink: 0 }}></div>
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--faint)', letterSpacing: '.2px' }}>UMass Amherst · Five College Community</span>
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--faint)', letterSpacing: '.2px' }}>UMass Amherst Community</span>
           </div>
 
           {/* Main headline – clamp() makes it fluid between mobile and desktop. */}
@@ -54,7 +54,7 @@ export default function Home() {
             Buy. Sell.<br /><span style={{ color: 'var(--terra)' }}>Find your area.</span>
           </h1>
           <p style={{ fontSize: 'clamp(13px,2vw,16px)', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.8, maxWidth: '520px', marginBottom: '32px' }}>
-            A public housing information hub and a verified student marketplace – built exclusively for the Five College community. No strangers, no scams.
+            A public housing information hub and a verified student marketplace – built exclusively for the UMass community. No strangers, no scams.
           </p>
 
           {/* Primary CTA buttons – navigate to the two main sections. */}
@@ -131,7 +131,7 @@ export default function Home() {
 
       {/* Page footer – only appears on the Home page. */}
       <footer>
-        <strong>ReLoop UMass</strong> · Five College Community · {new Date().getFullYear()}
+        <strong>ReLoop UMass</strong> Community · {new Date().getFullYear()}
       </footer>
 
       {/* DetailModal mounts only when a card has been clicked (selectedItem !== null). */}

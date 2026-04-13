@@ -16,6 +16,7 @@ import { useApp } from '../context/AppContext';
 import CardA from '../components/CardA';
 import DetailModal from '../components/DetailModal';
 import EditListingModal from '../components/EditListingModal';
+import { formatDate } from '../data/constants';
 import CreateListingModal from '../components/CreateListingModal';
 
 // Inline confirmation modal — shown before permanently deleting a listing.
@@ -218,14 +219,16 @@ export default function Profile() {
               {myReviews.map((r, i) => (
                 <div key={i} className="card border p-4" style={{ borderRadius: '14px' }}>
                   <div className="d-flex align-items-center gap-3 mb-2">
-                    <div className="card-avatar" style={{ width: '36px', height: '36px', fontSize: '12px' }}>{r.init}</div>
+                    <div className="card-avatar" style={{ width: '36px', height: '36px', fontSize: '12px' }}>
+                      {r.reviewer.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
                     <div className="flex-grow-1">
-                      <div className="fw-medium" style={{ fontSize: '13px' }}>{r.from}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--muted)' }}>{r.date}</div>
+                      <div className="fw-medium" style={{ fontSize: '13px' }}>{r.reviewer.name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--muted)' }}>{formatDate(r.createdAt)}</div>
                     </div>
                     <div style={{ fontSize: '12px' }}>{'⭐'.repeat(r.stars)}</div>
                   </div>
-                  <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.7 }}>{r.text}</p>
+                  <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.7 }}>{r.comment}</p>
                 </div>
               ))}
             </div>

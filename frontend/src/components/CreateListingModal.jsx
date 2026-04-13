@@ -29,11 +29,11 @@ export default function CreateListingModal({ onClose, redirectTo }) {
   const navigate = useNavigate();
 
   // Controlled form state.
-  const [title, setTitle] = useState('');
-  const [cat, setCat] = useState('Furniture'); // default to first category
-  const [price, setPrice] = useState('');
-  const [cond, setCond] = useState('New');     // default to best condition
-  const [desc, setDesc] = useState('');
+  const [title, setTitle]             = useState('');
+  const [category, setCategory]       = useState('Furniture');
+  const [price, setPrice]             = useState('');
+  const [condition, setCondition]     = useState('New');
+  const [description, setDescription] = useState('');
 
   // Lock body scroll while the modal is open; restore on unmount.
   useEffect(() => {
@@ -48,22 +48,22 @@ export default function CreateListingModal({ onClose, redirectTo }) {
       return;
     }
 
-    // Build the new listing object that matches the shape used by CardA/DetailModal.
+    // Build the new listing object matching the schema shape exactly.
+    // owner mirrors the populated User object returned by MongoDB populate().
     addListing({
-      id: Date.now(),             // temporary ID; real ID will come from MongoDB
-      emoji: EMOJI[cat] || '📦', // map category to its display emoji
-      cat,
-      title: title.trim(),
-      price: +price,              // convert string to number
-      cond,
-      status: 'Available',        // all new listings start as Available
-      desc: desc || 'No description provided.',
-      seller: 'John Doe',         // hardcoded until auth is implemented
-      init: 'JD',
-      rating: 5.0,
-      tags: [cat, cond],
-      posted: 'Just now',
-      ownedByUser: true,          // flag so Profile page knows this belongs to the current user
+      id:          Date.now(),                        // temporary; MongoDB will assign _id
+      owner:       { name: 'John Doe', avgRating: 5.0 }, // hardcoded until auth is implemented
+      title:       title.trim(),
+      description: description || 'No description provided.',
+      category,
+      price:       +price,
+      condition,
+      status:      'Available',                       // all new listings start as Available
+      imageUrls:   [],                                // populated when S3 upload is wired up
+      tags:        [category, condition],
+      createdAt:   new Date().toISOString(),          // mirrors MongoDB timestamps.createdAt
+      emoji:       EMOJI[category] || '📦',          // frontend-only placeholder
+      ownedByUser: true,                              // frontend-only flag for Profile tab
     });
 
     showToast('Listing posted!', '🎉');
@@ -103,7 +103,7 @@ export default function CreateListingModal({ onClose, redirectTo }) {
             <div className="row g-3">
               <div className="col">
                 <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Category</label>
-                <select className="form-select" value={cat} onChange={e => setCat(e.target.value)}>
+                <select className="form-select" value={category} onChange={e => setCategory(e.target.value)}>
                   {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
@@ -119,7 +119,7 @@ export default function CreateListingModal({ onClose, redirectTo }) {
               <div className="d-flex flex-wrap gap-2">
                 {/* .cond-opt.on highlights the selected pill; click switches selection. */}
                 {CONDITIONS.map(c => (
-                  <span key={c} className={`cond-opt${cond === c ? ' on' : ''}`} onClick={() => setCond(c)}>{c}</span>
+                  <span key={c} className={`cond-opt${condition === c ? ' on' : ''}`} onClick={() => setCondition(c)}>{c}</span>
                 ))}
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function CreateListingModal({ onClose, redirectTo }) {
             {/* Description textarea – optional (falls back to default string in submit). */}
             <div>
               <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Description</label>
-              <textarea className="form-control" rows={3} value={desc} onChange={e => setDesc(e.target.value)}
+              <textarea className="form-control" rows={3} value={description} onChange={e => setDescription(e.target.value)}
                 placeholder="Describe the item – condition details, dimensions, why you're selling..." />
             </div>
 

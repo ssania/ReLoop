@@ -30,7 +30,7 @@ export default function HousingCard({ h, onClick }) {
         {/* Neighbourhood name. */}
         <div className="fw-bold mb-1" style={{ fontFamily: 'Syne,sans-serif', fontSize: '15px', letterSpacing: '-.3px' }}>{h.name}</div>
         {/* Distance from UMass campus. */}
-        <div className="mb-3" style={{ fontSize: '10px', fontWeight: 300, color: 'var(--muted)' }}>{h.dist}</div>
+        <div className="mb-3" style={{ fontSize: '10px', fontWeight: 300, color: 'var(--muted)' }}>{h.distance}</div>
 
         {/* Rent range label + figures. */}
         <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '8px', letterSpacing: '1.5px', color: 'var(--muted)' }}>
@@ -46,14 +46,13 @@ export default function HousingCard({ h, onClick }) {
         {/* Bus route chips + first two amenity chips.
             .hchip.bus applies the sage-green colour for transit tags. */}
         <div className="d-flex flex-wrap gap-1 mb-3">
-          {h.bus.map(b => <span key={b} className="hchip bus">{b}</span>)}
+          {h.busRoutes.map(b => <span key={b} className="hchip bus">{b}</span>)}
           {h.amenities.slice(0, 2).map(a => <span key={a} className="hchip">{a}</span>)}
         </div>
 
-        {/* Footer row: star rating + walk time. */}
-        <div className="d-flex align-items-center justify-content-between pt-2 border-top" style={{ borderColor: 'var(--sand2)!important' }}>
-          <span style={{ fontSize: '11px', color: 'var(--faint)' }}>⭐ {h.rating.toFixed(1)} ({h.reviews})</span>
-          <span className="hchip">{h.walk}</span>
+        {/* Footer row: star rating + review count. */}
+        <div className="d-flex align-items-center pt-2 border-top" style={{ borderColor: 'var(--sand2)!important' }}>
+          <span style={{ fontSize: '11px', color: 'var(--faint)' }}>⭐ {h.averageRating.toFixed(1)} ({h.reviewCount} reviews)</span>
         </div>
       </div>
     </div>

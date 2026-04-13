@@ -21,14 +21,14 @@ async function seed() {
   const user1 = await User.create({
     name: 'Alex Smith',
     email: 'asmith@umass.edu',
-    password_hash: 'hashed_password_here',
+    passwordHash: 'hashed_password_here',
     role: 'student'
   });
 
   const user2 = await User.create({
     name: 'Sara Jones',
     email: 'sjones@umass.edu',
-    password_hash: 'hashed_password_here',
+    passwordHash: 'hashed_password_here',
     role: 'student'
   });
 
@@ -39,7 +39,7 @@ async function seed() {
     description: 'Moving out, selling my desk. Barely used.',
     category: 'Furniture',
     price: 45,
-    condition: 'like new',
+    condition: 'Like New',
     tags: ['desk', 'furniture', 'ikea']
   });
 
@@ -48,17 +48,18 @@ async function seed() {
     name: 'North Apartments',
     type: 'On-campus',
     description: 'On-campus housing north of the library.',
-    rent_min: 800,
-    rent_max: 1200,
+    distance: '0.2 – 0.5 mi from campus',
+    rentMin: 800,
+    rentMax: 1200,
     amenities: ['laundry', 'wifi', 'parking'],
-    bus_routes: ['31', '38']
+    busRoutes: ['PVTA #31', 'PVTA #38']
   });
 
   // Create sample review (user2 reviews user1 after a transaction)
   await Review.create({
     reviewer: user2._id,
-    target_user: user1._id,
-    listing_ref: listing1._id,
+    targetUser: user1._id,
+    listingRef: listing1._id,
     stars: 5,
     comment: 'Great seller, item was exactly as described!'
   });
@@ -69,7 +70,6 @@ async function seed() {
     area: area1._id,
     stars: 4,
     comment: 'Great location, close to campus and bus stops.',
-    tenant_period: 'Fall 2023 - Spring 2024'
   });
 
   console.log('Seed data inserted!');

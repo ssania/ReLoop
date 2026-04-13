@@ -3,6 +3,16 @@
 // emoji and gradient backgrounds by category. They do not come from the
 // backend — they are fixed UI decisions that live in the frontend.
 
+// formatDate: converts a JS Date, ISO string, or timestamp into a human-readable
+// string like "Mar 2025". Works with both MongoDB createdAt and mock ISO strings.
+// Falls back gracefully to the raw value if parsing fails.
+export function formatDate(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value); // already a display string
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
 // EMOJI: maps a listing category to its display emoji.
 export const EMOJI = {
   Furniture: '🛋️',

@@ -43,11 +43,11 @@ export default function Housing() {
     // "Budget friendly" tab: only show the most affordable areas.
     if (activeTab === 'budget' && h.rentMin > 950) return false;
     // Text search: case-insensitive match against name and description.
-    if (search && !h.name.toLowerCase().includes(search.toLowerCase()) && !h.desc.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !h.name.toLowerCase().includes(search.toLowerCase()) && !h.description.toLowerCase().includes(search.toLowerCase())) return false;
     // Rent filter: hide areas whose starting rent exceeds the selected ceiling.
     if (rentFilter && h.rentMin > +rentFilter) return false;
     // Bus filter: check if any of the area's bus routes contain the route number.
-    if (busFilter && !h.bus.some(b => b.includes('#' + busFilter))) return false;
+    if (busFilter && !h.busRoutes.some(b => b.includes('#' + busFilter))) return false;
     return true;
   });
 
