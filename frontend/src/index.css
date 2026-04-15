@@ -1,0 +1,167 @@
+/* ── DESIGN TOKENS ───────────────────────────────────────────────────────────
+   All brand colours and shared spacing live here as CSS custom properties so
+   components can reference them as var(--token) instead of hard-coded values.
+   Bootstrap utility classes are used for layout; these tokens fill the gaps.     */
+:root {
+  /* Neutral palette */
+  --sand:#f7f3ee; --sand2:#efe9e1; --sand3:#e4dbd0;
+  --ink:#18181b; --faint:#71717a; --muted:#a1a1aa;
+  --white:#fff; --border:#e8e2da;
+
+  /* Terra (orange) – brand accent, used for CTAs and marketplace */
+  --terra:#c96a2e; --terra-bg:#fdf0e8; --terra-bd:#f0c8a8;
+
+  /* Sage (green) – used for Housing Hub elements */
+  --sage:#2a7a5e; --sage-bg:#e6f4ef; --sage-bd:#b8dbd0;
+
+  /* Status badge colours */
+  --avail:#16a34a; --avail-bd:#bbf7d0;   /* green – Available */
+  --intalk:#d97706; --intalk-bd:#fde68a; /* amber – In-talk   */
+  --sold:#dc2626;  --sold-bd:#fecaca;    /* red   – Sold      */
+
+  /* Fixed navbar height – used as paddingTop on <main> to avoid content overlap. */
+  --nav-h:60px;
+}
+
+/* ── BASE ────────────────────────────────────────────────────────────────────
+   !important is required to override Bootstrap's default body font and
+   background color which are otherwise applied via higher-specificity rules.    */
+html { scroll-behavior:smooth; }
+body { font-family:'DM Sans',sans-serif!important; background:var(--sand)!important; color:var(--ink)!important; min-height:100vh; }
+
+/* ── NAVBAR ─────────────────────────────────────────────────────────────────
+   The navbar is position:fixed so it stays at the top during scroll.
+   backdrop-filter gives the frosted-glass effect over page content below.       */
+.navbar { height:var(--nav-h); backdrop-filter:blur(16px); background:rgba(255,255,255,.92)!important; }
+
+/* Logo mark – Syne font gives the bold editorial feel. */
+.logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--ink)!important; letter-spacing:-.5px; text-decoration:none!important; }
+.logo-gem { width:30px; height:30px; border-radius:9px; background:var(--ink); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.logo-gem svg { width:15px; height:15px; }
+
+/* Desktop nav links – underline highlight on active route via React Router. */
+.nl { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:400; color:var(--faint)!important; border-radius:8px; text-decoration:none; padding:7px 14px; transition:all .15s; }
+.nl:hover,.nl.active { color:var(--ink)!important; background:var(--sand); font-weight:500; }
+
+/* Mobile nav dropdown – hidden by default, shown by toggling the .open class. */
+.mobile-nav { display:none; position:fixed; top:var(--nav-h); left:0; right:0; background:var(--white); border-bottom:1px solid var(--border); z-index:99; flex-direction:column; padding:12px 20px 16px; }
+.mobile-nav.open { display:flex; }
+.mobile-nl { font-family:'DM Sans',sans-serif; font-size:14px; color:var(--faint); padding:10px 0; border-bottom:1px solid var(--sand2); text-decoration:none; display:block; }
+.mobile-nl:last-child { border-bottom:none; }
+.mobile-nl.active { color:var(--ink); font-weight:500; }
+
+/* ── HERO BLOBS ──────────────────────────────────────────────────────────────
+   Decorative radial-gradient circles that sit behind the Home hero copy.
+   pointer-events:none prevents them from intercepting clicks.                   */
+.hero-blob { position:absolute; width:500px; height:500px; border-radius:50%; background:radial-gradient(circle,rgba(201,106,46,.07) 0%,transparent 70%); top:-100px; right:-80px; pointer-events:none; }
+.hero-blob2 { position:absolute; width:360px; height:360px; border-radius:50%; background:radial-gradient(circle,rgba(42,122,94,.06) 0%,transparent 70%); bottom:-80px; left:5%; pointer-events:none; }
+
+/* ── SERVICE CARDS ───────────────────────────────────────────────────────────
+   The two feature cards on the Home page (Housing Hub / Marketplace).
+   .svc-stripe is a 3px colour bar at the very top of each card.                 */
+.svc-card { cursor:pointer; transition:box-shadow .2s,transform .2s; }
+.svc-card:hover { box-shadow:0 8px 28px rgba(24,24,27,.08)!important; transform:translateY(-2px); }
+.svc-stripe { position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; }
+
+/* ── MARKETPLACE CARDS ───────────────────────────────────────────────────────
+   .card-a – base card with lift-on-hover animation.
+   .card-emoji – the category emoji shown in the gradient image area.
+   .card-status – coloured badge in the top-left of the image area.
+   .card-save – heart icon button in the top-right, toggles save state.
+   .card-avatar – small initials circle for the seller.                          */
+.card-a { cursor:pointer; transition:transform .2s,box-shadow .2s; border-radius:16px!important; overflow:hidden; }
+.card-a:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(24,24,27,.1)!important; }
+.card-emoji { font-size:3.2rem; user-select:none; pointer-events:none; }
+.card-status { display:flex; align-items:center; gap:4px; padding:4px 10px; border-radius:100px; border:1px solid; backdrop-filter:blur(6px); }
+.card-status-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.card-status-label { font-size:9px; font-weight:600; letter-spacing:.3px; }
+
+/* Status colour variants – applied via statusClass() helper in CardA/DetailModal. */
+.st-avail { background:rgba(240,253,244,.92); border-color:var(--avail-bd)!important; }
+.st-avail .card-status-dot { background:var(--avail); }
+.st-avail .card-status-label { color:var(--avail); }
+.st-intalk { background:rgba(255,251,235,.92); border-color:var(--intalk-bd)!important; }
+.st-intalk .card-status-dot { background:var(--intalk); }
+.st-intalk .card-status-label { color:var(--intalk); }
+.st-sold { background:rgba(254,242,242,.92); border-color:var(--sold-bd)!important; }
+.st-sold .card-status-dot { background:var(--sold); }
+.st-sold .card-status-label { color:var(--sold); }
+
+.card-save { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.9); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer; color:var(--muted); transition:all .15s; z-index:2; }
+.card-save:hover,.card-save.saved { background:var(--terra); border-color:var(--terra); color:#fff; }
+
+/* Shared initials avatar used in cards and modals. */
+.card-avatar { width:22px; height:22px; border-radius:50%; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:8px; font-weight:700; flex-shrink:0; }
+
+/* ── HOUSING CARDS ───────────────────────────────────────────────────────────
+   .hcard – housing neighbourhood card, same lift animation as .card-a.
+   .hchip – small pill tag for bus routes and amenity snippets.                  */
+.hcard { cursor:pointer; transition:transform .2s,box-shadow .2s; border-radius:16px!important; overflow:hidden; }
+.hcard:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(24,24,27,.1)!important; }
+.hchip { padding:3px 10px; border-radius:100px; font-size:9px; background:var(--sand); color:var(--faint); border:1px solid var(--sand3); }
+.hchip.bus { background:var(--sage-bg); color:var(--sage); border-color:var(--sage-bd); font-weight:500; }
+
+/* ── TABS ────────────────────────────────────────────────────────────────────
+   .ph-tab-bar – scrollable horizontal strip at the bottom of page heroes.
+   .ph-tab / .ptab – individual tab buttons (same style, two class names used
+   across Housing/Marketplace and Profile respectively).
+   .on – active state: ink colour + 2.5px underline border.                     */
+.ph-tab-bar { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; border-top:1px solid var(--border); }
+.ph-tab,.ptab { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:400; color:var(--muted); padding:13px 18px; cursor:pointer; border-bottom:2.5px solid transparent; white-space:nowrap; flex-shrink:0; transition:all .15s; border-top:none; border-left:none; border-right:none; background:none; }
+.ph-tab.on,.ptab.on { color:var(--ink); font-weight:500; border-bottom-color:var(--ink); }
+
+/* ── CATEGORY PILLS ──────────────────────────────────────────────────────────
+   Marketplace category filter row. .cat.on switches to ink fill (selected).    */
+.cat { padding:7px 18px; border-radius:100px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:400; color:var(--faint); background:var(--sand); border:1px solid var(--sand3); cursor:pointer; white-space:nowrap; flex-shrink:0; transition:all .15s; }
+.cat.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+
+/* ── FORM OVERRIDES ──────────────────────────────────────────────────────────
+   Bootstrap form controls get the sandy background to match the brand palette.
+   Focus ring uses terra accent instead of Bootstrap's default blue.
+   .cond-opt – condition selector pills in the CreateListingModal.
+   .upload-zone – dashed drag-drop area for photo uploads.                       */
+.form-control,.form-select { background:var(--sand)!important; border-color:var(--sand3)!important; font-family:'DM Sans',sans-serif; }
+.form-control:focus,.form-select:focus { border-color:var(--terra)!important; background:#fff!important; box-shadow:none!important; }
+.cond-opt { padding:6px 14px; border-radius:100px; font-size:11px; font-weight:500; cursor:pointer; border:1.5px solid var(--sand3); background:var(--sand); color:var(--faint); transition:all .15s; font-family:'DM Sans',sans-serif; display:inline-block; }
+.cond-opt.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+.upload-zone { border:2px dashed var(--sand3); border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all .15s; }
+.upload-zone:hover { border-color:var(--terra); background:var(--terra-bg); }
+
+/* ── MODALS ──────────────────────────────────────────────────────────────────
+   slideUp animation plays when any Bootstrap modal-content mounts.
+   .dm-close – absolute-positioned X button in the top-right of detail modals.
+   .dm-seller-avatar – large initials avatar in the seller section.
+   .dm-btn-save – save toggle icon button in the detail modal action row.       */
+@keyframes slideUp { from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)} }
+.modal-content { animation:slideUp .25s ease; border:none!important; }
+.dm-close { position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%; background:var(--sand); border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; z-index:10; transition:all .15s; }
+.dm-close:hover { background:var(--sand3); }
+.dm-seller-avatar { width:44px; height:44px; border-radius:50%; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:16px; font-weight:700; flex-shrink:0; }
+.dm-btn-save { width:48px; height:48px; border-radius:11px; background:var(--sand); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; color:var(--muted); transition:all .15s; flex-shrink:0; }
+.dm-btn-save:hover,.dm-btn-save.saved { background:var(--terra-bg); border-color:var(--terra-bd); color:var(--terra); }
+
+/* ── MAP PIN ─────────────────────────────────────────────────────────────────
+   Decorative teardrop pin shape used in the Housing map placeholder.
+   Rotated square + ::after pseudo-element creates the classic map-pin shape.
+   .umass variant uses sage green to distinguish UMass from neighbourhood pins. */
+.hdm-map-pin { width:20px; height:20px; background:var(--terra); border-radius:50% 50% 50% 0; transform:rotate(-45deg); position:absolute; top:40%; left:50%; margin-left:-10px; }
+.hdm-map-pin::after { content:''; width:8px; height:8px; background:#fff; border-radius:50%; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(45deg); }
+.hdm-map-pin.umass { background:var(--sage); top:55%; left:60%; }
+
+/* ── PROFILE ─────────────────────────────────────────────────────────────────
+   .profile-avatar – large initials circle in the Profile hero.
+   .verified-badge – green pill confirming the user's UMass email is verified.  */
+.profile-avatar { width:72px; height:72px; border-radius:50%; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:26px; font-weight:800; flex-shrink:0; }
+.verified-badge { display:inline-flex; align-items:center; gap:5px; background:var(--sage-bg); color:var(--sage); border:1px solid var(--sage-bd); padding:4px 12px; border-radius:100px; font-size:10px; font-weight:600; margin-top:8px; }
+
+/* ── TOAST ───────────────────────────────────────────────────────────────────
+   Fixed-position notification that slides up from the bottom-right.
+   Controlled via AppContext.showToast(); the .show class triggers the animation.
+   pointer-events:none prevents accidental interaction while the toast is shown. */
+.toast-reloop { position:fixed; bottom:24px; right:24px; background:var(--ink); color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; z-index:1060; transform:translateY(80px); opacity:0; transition:all .3s; display:flex; align-items:center; gap:9px; max-width:300px; pointer-events:none; }
+.toast-reloop.show { transform:translateY(0); opacity:1; }
+
+/* ── FOOTER ──────────────────────────────────────────────────────────────────
+   Dark footer strip at the bottom of the Home page only.                       */
+footer { background:var(--ink); color:rgba(255,255,255,.4); text-align:center; padding:24px; font-size:12px; }
+footer strong { color:rgba(255,255,255,.7); }
