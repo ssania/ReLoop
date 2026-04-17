@@ -4,7 +4,7 @@
 //
 // Three tabs:
 //   listings – only listings where ownedByUser === true (created by this user)
-//   saved    – listings whose IDs are in AppContext.savedIds
+//   saved    – listings whose IDs are in AppContext.favoriteIds
 //   reviews  – fetched from GET /api/reviews on mount
 //
 // On the listings tab each card shows an "Edit" button that opens
@@ -61,7 +61,7 @@ function DeleteConfirmModal({ item, onConfirm, onCancel }) {
 const TABS = [['listings', 'My listings'], ['saved', 'Saved items'], ['reviews', 'Reviews']];
 
 export default function Profile() {
-  const { listings, savedIds, deleteListing, showToast } = useApp();
+  const { listings, favoriteIds, deleteListing, showToast } = useApp();
   const [tab, setTab] = useState('listings');
   const [myReviews, setMyReviews] = useState([]);
 
@@ -88,13 +88,13 @@ export default function Profile() {
   // myListings: listings owned by the current user (John Doe until auth is implemented).
   const myListings = listings.filter(m => m.owner?.name === 'John Doe');
 
-  // savedItems: derived from the full listings array filtered by savedIds Set.
-  const savedItems = listings.filter(m => savedIds.has(m.id));
+  // favoriteItems: derived from the full listings array filtered by favoriteIds Set.
+  const favoriteItems = listings.filter(m => favoriteIds.has(m.id));
 
-  // Stats: active count is live from myListings; saved count is live from context.
+  // Stats: active count is live from myListings; favorites count is live from context.
   const statCards = [
     [myListings.length, 'Active listings'],
-    [savedIds.size, 'Saved items'],
+    [favoriteIds.size, 'Saved items'],
     ['4.8 ⭐', 'Seller rating'],
     ['Verified', 'Account status'],
   ];
@@ -195,9 +195,9 @@ export default function Profile() {
 
         {/* ── Saved items tab ───────────────────────────────────────────── */}
         {tab === 'saved' && (
-          savedItems.length ? (
+          favoriteItems.length ? (
             <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
-              {savedItems.map(item => (
+              {favoriteItems.map(item => (
                 <div key={item.id} className="col">
                   <CardA item={item} onClick={setSelectedItem} />
                 </div>

@@ -27,9 +27,9 @@ function statusClass(s) {
 }
 
 export default function CardA({ item, onClick }) {
-  const { savedIds, toggleSave } = useApp();
+  const { favoriteIds, toggleFavorite } = useApp();
 
-  const saved = savedIds.has(item.id);
+  const saved = favoriteIds.has(item.id);
 
   // Gradient background keyed on category; falls back to 'Other'.
   const bg = IMG_BG[item.category] || IMG_BG.Other;
@@ -51,7 +51,7 @@ export default function CardA({ item, onClick }) {
 
         <button
           className={`card-save position-absolute top-0 end-0 m-2 ${saved ? 'saved' : ''}`}
-          onClick={e => { e.stopPropagation(); toggleSave(item.id); }}
+          onClick={e => { e.stopPropagation(); toggleFavorite(item.id); }}
         >
           {saved ? '♥' : '♡'}
         </button>

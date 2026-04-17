@@ -23,7 +23,7 @@ app.use(express.json());
 app.use('/api/listings', require('./routes/listingRoutes'));
 app.use('/api/housing',  require('./routes/housingRoutes'));
 app.use('/api/reviews',  require('./routes/reviewRoutes'));
-app.use('/api/saves',    require('./routes/saveRoutes'));
+app.use('/api/favorites', require('./routes/favoriteRoutes'));
 
 // Health-check endpoint – useful for confirming the server is up.
 app.get('/', (req, res) => {
