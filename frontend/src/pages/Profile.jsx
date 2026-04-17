@@ -85,8 +85,8 @@ export default function Profile() {
       .catch(err => console.error('Failed to fetch reviews:', err));
   }, []);
 
-  // myListings: only items the current user created (flagged in CreateListingModal).
-  const myListings = listings.filter(m => m.ownedByUser);
+  // myListings: listings owned by the current user (John Doe until auth is implemented).
+  const myListings = listings.filter(m => m.owner?.name === 'John Doe');
 
   // savedItems: derived from the full listings array filtered by savedIds Set.
   const savedItems = listings.filter(m => savedIds.has(m.id));

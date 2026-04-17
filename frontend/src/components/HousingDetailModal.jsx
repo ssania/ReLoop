@@ -66,7 +66,7 @@ export default function HousingDetailModal({ h, onClose }) {
             {/* Key info – 4 stat tiles in a 2-column Bootstrap grid. */}
             <Section title="Key info">
               <div className="row g-2">
-                {[['Distance', h.distance], ['Rent range', `$${h.rentMin.toLocaleString()} – $${h.rentMax.toLocaleString()}/mo`], ['Area rating', `⭐ ${h.averageRating.toFixed(1)} (${h.reviewCount} reviews)`], ['Typical type', h.type]].map(([label, val]) => (
+                {[['Distance', `${h.distance} mi from campus`], ['Rent range', `$${h.rentMin.toLocaleString()} – $${h.rentMax.toLocaleString()}/mo`], ['Area rating', `⭐ ${h.averageRating.toFixed(1)} (${h.reviewCount} reviews)`], ['Typical type', h.type]].map(([label, val]) => (
                   <div key={label} className="col-6">
                     <div className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                       <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '9px', letterSpacing: '1px', color: 'var(--muted)' }}>{label}</div>

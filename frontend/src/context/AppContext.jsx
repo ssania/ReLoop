@@ -2,12 +2,11 @@
 // AppContext is the single source of truth for data shared across components:
 //   • listings   – marketplace items fetched from GET /api/listings
 //   • housing    – neighbourhood data fetched from GET /api/housing
-//   • savedIds   – Set of listing IDs the user has heart-saved (client-only)
+//   • savedIds   – Set of listing IDs the user has heart-saved, persisted via /api/saves
 //   • toast      – current notification state { msg, icon, visible }
 //
-// On mount, AppProvider fetches both /api/listings and /api/housing from the
-// Express backend (localhost:5002). New listings are POST-ed to the backend
-// and then prepended to local state so the UI updates instantly.
+// On mount, AppProvider fetches listings, housing, and saves in parallel from
+// the Express backend (localhost:5002).
 
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
@@ -27,8 +26,7 @@ export function AppProvider({ children }) {
   // loading: true while the initial data fetch is in flight.
   const [loading, setLoading] = useState(true);
 
-  // savedIds: client-side only Set of numeric IDs the user has saved.
-  // When auth + backend are ready this would persist to the DB per user.
+  // savedIds: Set of numeric IDs the user has saved, synced with /api/saves.
   const [savedIds, setSavedIds] = useState(new Set());
 
   // toast: drives the <Toast /> overlay component.
@@ -43,19 +41,21 @@ export function AppProvider({ children }) {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [listRes, housingRes] = await Promise.all([
+        const [listRes, housingRes, savesRes] = await Promise.all([
           fetch(`${API}/listings`),
           fetch(`${API}/housing`),
+          fetch(`${API}/saves`),
         ]);
 
-        // Parse both JSON responses concurrently.
-        const [listData, housingData] = await Promise.all([
+        const [listData, housingData, savesData] = await Promise.all([
           listRes.json(),
           housingRes.json(),
+          savesRes.json(),
         ]);
 
         setListings(listData);
         setHousing(housingData);
+        setSavedIds(new Set(savesData));
       } catch (err) {
         // If the backend is not running, log the error and leave arrays empty.
         // The UI will show empty states instead of crashing.
@@ -77,21 +77,22 @@ export function AppProvider({ children }) {
     toastTimer.current = setTimeout(() => setToast(t => ({ ...t, visible: false })), 2800);
   }, []);
 
-  // toggleSave: add or remove an ID from the savedIds Set.
-  // new Set(prev) clones so React detects the reference change.
-  const toggleSave = useCallback((id) => {
-    setSavedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-        showToast('Removed from saved', '🗑️');
-      } else {
-        next.add(id);
-        showToast('Saved!', '❤️');
-      }
-      return next;
-    });
-  }, [showToast]);
+  // toggleSave: persist the save/unsave to /api/saves, then sync local state.
+  const toggleSave = useCallback(async (id) => {
+    const isSaved = savedIds.has(id);
+    try {
+      await fetch(`${API}/saves/${id}`, { method: isSaved ? 'DELETE' : 'POST' });
+      setSavedIds(prev => {
+        const next = new Set(prev);
+        if (isSaved) { next.delete(id); } else { next.add(id); }
+        return next;
+      });
+      showToast(isSaved ? 'Removed from saved' : 'Saved!', isSaved ? '🗑️' : '❤️');
+    } catch (err) {
+      console.error('Failed to toggle save:', err);
+      showToast('Could not update saved', '⚠️');
+    }
+  }, [savedIds, showToast]);
 
   // addListing: POST the new listing to the backend, then prepend the returned
   // object (which has a server-assigned id) to local state.
@@ -111,11 +112,21 @@ export function AppProvider({ children }) {
     }
   }, [showToast]);
 
-  // updateListing: replace a listing in local state by id with the edited fields.
-  // When MongoDB is connected this will also PATCH /api/listings/:id.
-  const updateListing = useCallback((id, changes) => {
-    setListings(prev => prev.map(l => l.id === id ? { ...l, ...changes } : l));
-  }, []);
+  // updateListing: PATCH /api/listings/:id then sync local state with the returned object.
+  const updateListing = useCallback(async (id, changes) => {
+    try {
+      const res = await fetch(`${API}/listings/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(changes),
+      });
+      const updated = await res.json();
+      setListings(prev => prev.map(l => l.id === id ? updated : l));
+    } catch (err) {
+      console.error('Failed to update listing:', err);
+      showToast('Could not update listing', '⚠️');
+    }
+  }, [showToast]);
 
   // deleteListing: DELETE /api/listings/:id then remove from local state.
   const deleteListing = useCallback(async (id) => {

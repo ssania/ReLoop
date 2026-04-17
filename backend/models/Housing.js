@@ -10,7 +10,7 @@ const housingAreaSchema = new mongoose.Schema({
   name:          { type: String, required: true },
   type:          { type: String },
   description:   { type: String },
-  distance:      { type: String },
+  distance:      { type: Number },
   rentMin:       { type: Number },
   rentMax:       { type: Number },
   amenities:     [String],
@@ -25,16 +25,32 @@ const housingAreaSchema = new mongoose.Schema({
 // Exported so seed.js can use it directly.
 const HousingMongoose = mongoose.model('HousingArea', housingAreaSchema);
 
-// ============================================================
-// SECTION 2 — MOCK WRAPPER (active while MongoDB is not connected)
-// ============================================================
-
-const { housing } = require('../data/mockData');
-
 const HousingModel = {
-  // MongoDB: return HousingMongoose.find({});
-  getAll() {
-    return housing;
+  async getAll() {
+    const areas = await HousingMongoose.find({}).lean();
+    const HousingReview = require('./HousingReview');
+    const reviews = await HousingReview.find({})
+      .populate('reviewer', 'name')
+      .lean();
+
+    // attach reviews to their area as housingReviews[]
+    const reviewsByArea = {};
+    for (const r of reviews) {
+      const key = r.area.toString();
+      if (!reviewsByArea[key]) reviewsByArea[key] = [];
+      reviewsByArea[key].push({
+        reviewer:  { name: r.reviewer?.name ?? 'Anonymous' },
+        stars:     r.stars,
+        comment:   r.comment,
+        createdAt: r.createdAt,
+      });
+    }
+
+    return areas.map(a => ({
+      ...a,
+      id: a._id,
+      housingReviews: reviewsByArea[a._id.toString()] ?? [],
+    }));
   },
 };
 

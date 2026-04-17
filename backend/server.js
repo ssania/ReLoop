@@ -1,14 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-// const connectDB = require('./config/db'); // Uncomment when MONGO_URI is ready
+const connectDB = require('./config/db');
 
 dotenv.config();
 
 const app = express();
 
-// Connect to MongoDB (uncomment when MONGO_URI is configured in .env)
-// connectDB();
+connectDB();
 
 // ── Middleware ─────────────────────────────────────────────────────────────────
 // cors() allows the React dev server (localhost:5173) to call this API.
@@ -24,6 +23,7 @@ app.use(express.json());
 app.use('/api/listings', require('./routes/listingRoutes'));
 app.use('/api/housing',  require('./routes/housingRoutes'));
 app.use('/api/reviews',  require('./routes/reviewRoutes'));
+app.use('/api/saves',    require('./routes/saveRoutes'));
 
 // Health-check endpoint – useful for confirming the server is up.
 app.get('/', (req, res) => {

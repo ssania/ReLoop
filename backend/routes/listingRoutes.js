@@ -4,10 +4,11 @@
 
 const express = require('express');
 const router = express.Router();
-const { getListings, createListing, deleteListing } = require('../controllers/listingController');
+const { getListings, createListing, updateListing, deleteListing } = require('../controllers/listingController');
 
 router.get('/', getListings);
 router.post('/', createListing);
+router.patch('/:id', updateListing);
 router.delete('/:id', deleteListing);
 
 module.exports = router;
