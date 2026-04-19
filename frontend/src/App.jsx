@@ -2,7 +2,7 @@
 // App sits directly inside BrowserRouter (defined in main.jsx).
 // It has three responsibilities:
 //   1. Wraps the whole tree in <AppProvider> so every child can read global
-//      state (listings, savedIds, toast) via the useApp() hook.
+//      state (listings, favoriteIds, toast) via the useApp() hook.
 //   2. Renders <Navbar> and <Toast> which must be visible on every route.
 //   3. Defines the client-side route table via React Router <Routes>.
 
@@ -17,7 +17,7 @@ import Profile from './pages/Profile';
 
 export default function App() {
   return (
-    // AppProvider supplies listings, savedIds, and showToast to the whole tree.
+    // AppProvider supplies listings, favoriteIds, and showToast to the whole tree.
     <AppProvider>
       {/* Fixed top navbar – always visible regardless of active route. */}
       <Navbar />

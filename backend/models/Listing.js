@@ -23,35 +23,32 @@ const listingSchema = new mongoose.Schema({
 // Exported so seed.js can use it directly.
 const ListingMongoose = mongoose.model('Listing', listingSchema);
 
-// ============================================================
-// SECTION 2 — MOCK WRAPPER (active while MongoDB is not connected)
-// ============================================================
-// Controllers call these methods. Swap the bodies to MongoDB
-// versions (shown in comments) when the DB is connected.
-
-const { initialListings } = require('../data/mockData');
-
-let listings = [...initialListings];
+function normalize(doc) {
+  if (!doc) return null;
+  const obj = doc._id ? doc : doc;
+  return { ...obj, id: obj._id.toString() };
+}
 
 const ListingModel = {
-  // MongoDB: return ListingMongoose.find({}).populate('owner', 'name avgRating');
-  getAll() {
-    return listings;
+  async getAll() {
+    const docs = await ListingMongoose.find({}).populate('owner', 'name avgRating').sort({ createdAt: -1 }).lean();
+    return docs.map(normalize);
   },
 
-  // MongoDB: return new ListingMongoose(data).save();
-  create(data) {
-    const newId = listings.length > 0 ? Math.max(...listings.map(l => l.id)) + 1 : 1;
-    const newListing = { ...data, id: newId };
-    listings = [newListing, ...listings];
-    return newListing;
+  async create(data) {
+    const doc = await ListingMongoose.create(data);
+    const populated = await doc.populate('owner', 'name avgRating');
+    return normalize(populated.toObject());
   },
 
-  // MongoDB: return ListingMongoose.findByIdAndDelete(id);
-  remove(id) {
-    const before = listings.length;
-    listings = listings.filter(l => l.id !== id);
-    return listings.length < before;
+  async update(id, changes) {
+    const doc = await ListingMongoose.findByIdAndUpdate(id, changes, { new: true }).populate('owner', 'name avgRating').lean();
+    return normalize(doc);
+  },
+
+  async remove(id) {
+    const deleted = await ListingMongoose.findByIdAndDelete(id);
+    return !!deleted;
   },
 };
 

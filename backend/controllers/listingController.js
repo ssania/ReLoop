@@ -1,32 +1,60 @@
 // ── Listing Controller ──────────────────────────────────────────────────────
-// Handles request/response logic for listing resources.
-// Delegates data access to the Listing model.
-
 const ListingModel = require('../models/Listing');
+const User = require('../models/User');
+
+// Placeholder until auth is implemented — resolves to the "John Doe" seed user.
+async function getDefaultOwner() {
+  const user = await User.findOne({ email: 'john.doe@reloop.com' });
+  if (!user) throw new Error('Default owner not found — run seed.js first');
+  return user._id;
+}
 
 // GET /api/listings
-// Returns the full listings array as JSON.
-const getListings = (_req, res) => {
-  const listings = ListingModel.getAll();
-  res.json(listings);
+const getListings = async (_req, res) => {
+  try {
+    const listings = await ListingModel.getAll();
+    res.json(listings);
+  } catch (err) {
+    console.error('Failed to fetch listings:', err);
+    res.status(500).json({ message: 'Failed to fetch listings' });
+  }
 };
 
 // POST /api/listings
-// Accepts a listing object from CreateListingModal, assigns a numeric id,
-// prepends it to the store, and returns the created listing with 201 Created.
-const createListing = (req, res) => {
-  const newListing = ListingModel.create(req.body);
-  res.status(201).json(newListing);
+const createListing = async (req, res) => {
+  try {
+    const ownerId = await getDefaultOwner();
+    const { owner, ...rest } = req.body; // strip the frontend's plain-object owner
+    const newListing = await ListingModel.create({ ...rest, owner: ownerId });
+    res.status(201).json(newListing);
+  } catch (err) {
+    console.error('Failed to create listing:', err);
+    res.status(500).json({ message: 'Failed to create listing' });
+  }
+};
+
+// PATCH /api/listings/:id
+const updateListing = async (req, res) => {
+  try {
+    const updated = await ListingModel.update(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ message: 'Listing not found' });
+    res.json(updated);
+  } catch (err) {
+    console.error('Failed to update listing:', err);
+    res.status(500).json({ message: 'Failed to update listing' });
+  }
 };
 
 // DELETE /api/listings/:id
-// Removes the listing with the given numeric id from the store.
-// Returns 204 No Content on success, 404 if the id is not found.
-const deleteListing = (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const deleted = ListingModel.remove(id);
-  if (!deleted) return res.status(404).json({ message: 'Listing not found' });
-  res.status(204).send();
+const deleteListing = async (req, res) => {
+  try {
+    const deleted = await ListingModel.remove(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Listing not found' });
+    res.status(204).send();
+  } catch (err) {
+    console.error('Failed to delete listing:', err);
+    res.status(500).json({ message: 'Failed to delete listing' });
+  }
 };
 
-module.exports = { getListings, createListing, deleteListing };
+module.exports = { getListings, createListing, updateListing, deleteListing };

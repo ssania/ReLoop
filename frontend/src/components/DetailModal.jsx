@@ -24,9 +24,9 @@ function statusClass(s) {
 }
 
 export default function DetailModal({ item, onClose }) {
-  const { savedIds, toggleSave, showToast } = useApp();
+  const { favoriteIds, toggleFavorite, showToast } = useApp();
 
-  const saved    = savedIds.has(item.id);
+  const saved    = favoriteIds.has(item.id);
   const bg       = IMG_BG[item.category] || IMG_BG.Other;
   const initials = item.owner.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
@@ -131,7 +131,7 @@ export default function DetailModal({ item, onClose }) {
               >
                 💬 Contact seller
               </button>
-              <button className={`dm-btn-save${saved ? ' saved' : ''}`} onClick={() => toggleSave(item.id)}>
+              <button className={`dm-btn-save${saved ? ' saved' : ''}`} onClick={() => toggleFavorite(item.id)}>
                 {saved ? '♥' : '♡'}
               </button>
             </div>

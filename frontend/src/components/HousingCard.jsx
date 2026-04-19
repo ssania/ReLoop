@@ -30,7 +30,7 @@ export default function HousingCard({ h, onClick }) {
         {/* Neighbourhood name. */}
         <div className="fw-bold mb-1" style={{ fontFamily: 'Syne,sans-serif', fontSize: '15px', letterSpacing: '-.3px' }}>{h.name}</div>
         {/* Distance from UMass campus. */}
-        <div className="mb-3" style={{ fontSize: '10px', fontWeight: 300, color: 'var(--muted)' }}>{h.distance}</div>
+        <div className="mb-3" style={{ fontSize: '10px', fontWeight: 300, color: 'var(--muted)' }}>{h.distance} mi from campus</div>
 
         {/* Rent range label + figures. */}
         <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '8px', letterSpacing: '1.5px', color: 'var(--muted)' }}>
