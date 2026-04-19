@@ -18,6 +18,7 @@ const housingAreaSchema = new mongoose.Schema({
   imageUrls:     [{ url: { type: String, required: true }, key: { type: String, required: true } }],
   floorPlanUrls: [{ url: { type: String, required: true }, key: { type: String, required: true } }],
   coordinates:   { lat: Number, lng: Number },
+  mapEmbedUrl:   { type: String, default: '' },
   averageRating: { type: Number, default: 0 },
   reviewCount:   { type: Number, default: 0 },
 }, { timestamps: true });

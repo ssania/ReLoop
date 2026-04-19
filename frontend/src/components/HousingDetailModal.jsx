@@ -110,20 +110,30 @@ export default function HousingDetailModal({ h, onClose }) {
               </div>
             </Section>
 
-            {/* Map placeholder – will be replaced by a real Google Maps embed.
-                Two .hdm-map-pin elements represent the neighbourhood and UMass campus. */}
             <Section title="Location map">
-              <div className="rounded-3 position-relative d-flex align-items-center justify-content-center overflow-hidden"
-                style={{ background: 'linear-gradient(135deg,#e8f0e8,#d0e0d0)', height: '180px', border: '1px solid var(--sage-bd)' }}>
-                {/* Neighbourhood pin (terra/orange). */}
-                <div className="hdm-map-pin"></div>
-                {/* UMass campus pin (sage/green). */}
-                <div className="hdm-map-pin umass" style={{ top: '62%', left: '62%' }}></div>
-                <div className="px-3 py-2 rounded-2 fw-medium" style={{ background: 'rgba(255,255,255,.8)', fontSize: '11px', color: 'var(--sage)', marginTop: '80px' }}>
-                  📍 {h.name} · 🎓 UMass Campus
+              {h.mapEmbedUrl ? (
+                <div className="rounded-3 overflow-hidden" style={{ border: '1px solid var(--sage-bd)', height: '300px' }}>
+                  <iframe
+                    src={h.mapEmbedUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title={`Map for ${h.name}`}
+                  />
                 </div>
-              </div>
-              <p className="mt-2 mb-0" style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 300 }}>Full interactive map with Google Maps integration coming in the live version.</p>
+              ) : (
+                <div className="rounded-3 position-relative d-flex align-items-center justify-content-center overflow-hidden"
+                  style={{ background: 'linear-gradient(135deg,#e8f0e8,#d0e0d0)', height: '180px', border: '1px solid var(--sage-bd)' }}>
+                  <div className="hdm-map-pin"></div>
+                  <div className="hdm-map-pin umass" style={{ top: '62%', left: '62%' }}></div>
+                  <div className="px-3 py-2 rounded-2 fw-medium" style={{ background: 'rgba(255,255,255,.8)', fontSize: '11px', color: 'var(--sage)', marginTop: '80px' }}>
+                    📍 {h.name} · 🎓 UMass Campus
+                  </div>
+                </div>
+              )}
             </Section>
 
             {/* Student reviews – pulled from h.housingReviews. */}
