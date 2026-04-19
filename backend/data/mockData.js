@@ -177,7 +177,7 @@ const housing = [
     imageUrls:     [],
     floorPlanUrls: [],
     coordinates:   { lat: 42.3480, lng: -72.5350 },
-    mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1aA7U7ySy-zm3_c0jrHQwMscOWEeCpnc&ehbc=2E312F',
+    mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1aA7U7ySy-zm3_c0jrHQwMscOWEeCpnc&ehbc=2E312F&output=embed',
     averageRating: 3.5,
     reviewCount:   0,
     housingReviews: [],
