@@ -16,11 +16,23 @@ const housingAreaSchema = new mongoose.Schema({
   amenities:     [String],
   busRoutes:     [String],
   imageUrls:     [{ url: { type: String, required: true }, key: { type: String, required: true } }],
-  floorPlanUrls: [{ url: { type: String, required: true }, key: { type: String, required: true } }],
+  floorPlans:    [{
+    layout:      { type: String, required: true },
+    sqft:        { type: Number },
+    description: { type: String, default: '' },
+    imageUrl:    { type: String, default: '' },
+    imageKey:    { type: String, default: '' },
+  }],
   coordinates:   { lat: Number, lng: Number },
   mapEmbedUrl:   { type: String, default: '' },
   averageRating: { type: Number, default: 0 },
   reviewCount:   { type: Number, default: 0 },
+  contact:       {
+    phone:   { type: String, default: '' },
+    email:   { type: String, default: '' },
+    website: { type: String, default: '' },
+    address: { type: String, default: '' },
+  },
 }, { timestamps: true });
 
 // Exported so seed.js can use it directly.
