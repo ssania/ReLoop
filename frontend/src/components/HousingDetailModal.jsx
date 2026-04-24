@@ -11,8 +11,10 @@
 // DetailModal (see that file for the explanation).
 
 import { useEffect } from 'react';
+import { Home, Package, Bus, Compass, Phone, Mail, Globe, MapPin } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatDate } from '../data/constants';
+import HousingImageCarousel from './HousingImageCarousel';
 
 export default function HousingDetailModal({ h, onClose }) {
   // showToast is used for the "Contact area managers" button at the bottom.
@@ -30,20 +32,26 @@ export default function HousingDetailModal({ h, onClose }) {
       style={{ background: 'rgba(24,24,27,.55)', backdropFilter: 'blur(4px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
 
-      <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div className="modal-content rounded-4 position-relative overflow-hidden">
 
           {/* Floating close button. */}
           <button className="dm-close" onClick={onClose}>✕</button>
 
-          {/* ── Hero image area ── */}
-          <div className="d-flex align-items-center justify-content-center overflow-hidden"
-            style={{ height: 'clamp(160px,28vw,240px)', background: 'linear-gradient(135deg,#e8f0f5,#ccdcec)', borderRadius: '1rem 1rem 0 0' }}>
-            <div style={{ fontSize: 'clamp(3rem,8vw,5rem)' }}>{h.emoji}</div>
-          </div>
-
           {/* ── Modal body ── */}
           <div className="modal-body p-4">
+
+            {/* Hero carousel lives inside the scrollable body so it scrolls
+                away with the rest of the content instead of staying pinned. */}
+            <div className="mb-4" style={{ margin: '-1.5rem -1.5rem 1.5rem' }}>
+              <HousingImageCarousel
+                h={h}
+                showControls
+                showDots
+                roundedTop
+                variant="detail"
+              />
+            </div>
 
             {/* Kicker row – type + "Housing Hub" label with sage dot. */}
             <div className="d-flex align-items-center gap-2 mb-2 text-uppercase fw-semibold" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--sage)' }}>
@@ -58,9 +66,9 @@ export default function HousingDetailModal({ h, onClose }) {
             </div>
             <p className="mb-4" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--muted)' }}>Typical monthly rent range in this area</p>
 
-            {/* About – full neighbourhood description paragraph. */}
+            {/* About – monochrome timeline with stroked icons. */}
             <Section title="About this area">
-              <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.8 }}>{h.description}</p>
+              <AboutCards description={h.description} />
             </Section>
 
             {/* Key info – 4 stat tiles in a 2-column Bootstrap grid. */}
@@ -77,15 +85,32 @@ export default function HousingDetailModal({ h, onClose }) {
               </div>
             </Section>
 
-            {/* Floor plans – renders S3 images when available; placeholder shown until images are uploaded. */}
+            {/* Floor plans – each plan: image (or placeholder) + layout badge + sqft + description. */}
             <Section title="Floor plans available">
-              <div className="row g-2">
-                {h.floorPlanUrls.map(fp => (
-                  <div key={fp.key} className="col-12 col-sm-6">
-                    {/* TODO: replace placeholder with <img src={fp.url} /> once floor plan images are uploaded to S3 */}
-                    <div className="p-3 rounded-3 d-flex align-items-center justify-content-center"
-                      style={{ background: 'var(--sand)', border: '1px solid var(--sand3)', height: '100px' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--muted)' }}>🖼️ Floor plan image</span>
+              <div className="row g-3">
+                {(h.floorPlans ?? []).map((fp, i) => (
+                  <div key={i} className="col-12 col-sm-6">
+                    <div className="rounded-3 overflow-hidden h-100 d-flex flex-column" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
+                      {/* Image – real <img> when imageUrl is set, placeholder otherwise. */}
+                      {fp.imageUrl ? (
+                        <img src={fp.imageUrl} alt={`${fp.layout} floor plan`} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                      ) : (
+                        <div className="d-flex align-items-center justify-content-center" style={{ height: '140px', background: 'linear-gradient(135deg,#f0ebe0,#e5dcc8)' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--muted)' }}>🖼️ Floor plan image coming soon</span>
+                        </div>
+                      )}
+                      {/* Body – layout label + sqft badge + description. */}
+                      <div className="p-3 d-flex flex-column flex-grow-1">
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                          <span className="fw-semibold" style={{ fontSize: '13px', fontFamily: 'Syne,sans-serif', letterSpacing: '-.3px' }}>{fp.layout}</span>
+                          {fp.sqft != null && (
+                            <span className="badge rounded-pill px-2 py-1" style={{ background: 'var(--sage-bg)', color: 'var(--sage)', border: '1px solid var(--sage-bd)', fontWeight: 600, fontSize: '10px' }}>{fp.sqft.toLocaleString()} ft²</span>
+                          )}
+                        </div>
+                        {fp.description && (
+                          <p className="mb-0" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.6 }}>{fp.description}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -110,20 +135,30 @@ export default function HousingDetailModal({ h, onClose }) {
               </div>
             </Section>
 
-            {/* Map placeholder – will be replaced by a real Google Maps embed.
-                Two .hdm-map-pin elements represent the neighbourhood and UMass campus. */}
             <Section title="Location map">
-              <div className="rounded-3 position-relative d-flex align-items-center justify-content-center overflow-hidden"
-                style={{ background: 'linear-gradient(135deg,#e8f0e8,#d0e0d0)', height: '180px', border: '1px solid var(--sage-bd)' }}>
-                {/* Neighbourhood pin (terra/orange). */}
-                <div className="hdm-map-pin"></div>
-                {/* UMass campus pin (sage/green). */}
-                <div className="hdm-map-pin umass" style={{ top: '62%', left: '62%' }}></div>
-                <div className="px-3 py-2 rounded-2 fw-medium" style={{ background: 'rgba(255,255,255,.8)', fontSize: '11px', color: 'var(--sage)', marginTop: '80px' }}>
-                  📍 {h.name} · 🎓 UMass Campus
+              {h.mapEmbedUrl ? (
+                <div className="rounded-3 overflow-hidden" style={{ border: '1px solid var(--sage-bd)', height: 'clamp(220px, 40vw, 420px)' }}>
+                  <iframe
+                    src={h.mapEmbedUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title={`Map for ${h.name}`}
+                  />
                 </div>
-              </div>
-              <p className="mt-2 mb-0" style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 300 }}>Full interactive map with Google Maps integration coming in the live version.</p>
+              ) : (
+                <div className="rounded-3 position-relative d-flex align-items-center justify-content-center overflow-hidden"
+                  style={{ background: 'linear-gradient(135deg,#e8f0e8,#d0e0d0)', height: '180px', border: '1px solid var(--sage-bd)' }}>
+                  <div className="hdm-map-pin"></div>
+                  <div className="hdm-map-pin umass" style={{ top: '62%', left: '62%' }}></div>
+                  <div className="px-3 py-2 rounded-2 fw-medium" style={{ background: 'rgba(255,255,255,.8)', fontSize: '11px', color: 'var(--sage)', marginTop: '80px' }}>
+                    📍 {h.name} · 🎓 UMass Campus
+                  </div>
+                </div>
+              )}
             </Section>
 
             {/* Student reviews – pulled from h.housingReviews. */}
@@ -140,6 +175,38 @@ export default function HousingDetailModal({ h, onClose }) {
                 ))}
               </div>
             </Section>
+
+            {/* Contact – only renders rows for populated fields; the whole section is skipped if all are empty. */}
+            {h.contact && (h.contact.phone || h.contact.email || h.contact.website || h.contact.address) && (
+              <Section title="Contact">
+                <div className="d-flex flex-column gap-2">
+                  {h.contact.phone && (
+                    <a href={`tel:${h.contact.phone.replace(/\s/g, '')}`} className="d-flex align-items-center gap-2 text-decoration-none" style={{ color: 'var(--ink)' }}>
+                      <Phone size={15} strokeWidth={1.75} color="var(--sage)" />
+                      <span style={{ fontSize: '13px' }}>{h.contact.phone}</span>
+                    </a>
+                  )}
+                  {h.contact.email && (
+                    <a href={`mailto:${h.contact.email}`} className="d-flex align-items-center gap-2 text-decoration-none" style={{ color: 'var(--ink)' }}>
+                      <Mail size={15} strokeWidth={1.75} color="var(--sage)" />
+                      <span style={{ fontSize: '13px' }}>{h.contact.email}</span>
+                    </a>
+                  )}
+                  {h.contact.website && (
+                    <a href={h.contact.website} target="_blank" rel="noopener noreferrer" className="d-flex align-items-center gap-2 text-decoration-none" style={{ color: 'var(--ink)' }}>
+                      <Globe size={15} strokeWidth={1.75} color="var(--sage)" />
+                      <span style={{ fontSize: '13px' }}>{h.contact.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                    </a>
+                  )}
+                  {h.contact.address && (
+                    <div className="d-flex align-items-start gap-2" style={{ color: 'var(--faint)' }}>
+                      <MapPin size={15} strokeWidth={1.75} color="var(--sage)" style={{ marginTop: '2px', flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', lineHeight: 1.5 }}>{h.contact.address}</span>
+                    </div>
+                  )}
+                </div>
+              </Section>
+            )}
 
             {/* CTA – fires a toast to simulate sending a contact request. */}
             <button
@@ -164,6 +231,76 @@ function Section({ title, children }) {
       {/* Section heading – small uppercase label consistent with the app's style. */}
       <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>{title}</div>
       {children}
+    </div>
+  );
+}
+
+// AboutCards: parses the structured description string and renders it as clean
+// stacked sections with stroked lucide icons. Each section picks up a subtle
+// accent colour from the site palette (sage/terra/sand) so the layout reads
+// as designed rather than monochrome-dull.
+// Description format (see mockData.js):
+//   "[opening summary]\n\n🏠 The Community\n[body]\n\n💡 What's Included\n[body]..."
+const SECTION_META = {
+  '🏠': { Icon: Home,    accent: 'var(--sage)'   },
+  '💡': { Icon: Package, accent: 'var(--terra)'  },
+  '🚌': { Icon: Bus,     accent: 'var(--terra)'  },
+  '✅': { Icon: Compass, accent: 'var(--sage)'   },
+};
+
+function AboutCards({ description }) {
+  const blocks = (description || '').split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+  if (!blocks.length) return null;
+
+  const sections = [];
+  let lede = null;
+  for (const block of blocks) {
+    const firstLine = block.split('\n')[0];
+    const emojiMatch = firstLine.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s+(.+)$/u);
+    if (emojiMatch) {
+      const [, emoji, title] = emojiMatch;
+      const body = block.split('\n').slice(1).join('\n').trim();
+      sections.push({ emoji, title, body });
+    } else if (!sections.length) {
+      lede = lede ? `${lede}\n\n${block}` : block;
+    }
+  }
+
+  if (!sections.length) {
+    return <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.8, whiteSpace: 'pre-line' }}>{description}</p>;
+  }
+
+  return (
+    <div>
+      {lede && (
+        <p className="mb-4" style={{ fontSize: '14.5px', fontWeight: 400, color: 'var(--ink)', lineHeight: 1.65, letterSpacing: '-.1px' }}>{lede}</p>
+      )}
+      {/* Clean stacked sections with palette-synced accents and soft hairline dividers. */}
+      <div>
+        {sections.map((s, i) => {
+          const meta = SECTION_META[s.emoji] ?? { Icon: Compass, accent: 'var(--ink)' };
+          const { Icon, accent } = meta;
+          const isLast = i === sections.length - 1;
+          return (
+            <div key={i}
+              style={{
+                paddingBottom: isLast ? 0 : 'clamp(18px, 3vw, 24px)',
+                marginBottom:  isLast ? 0 : 'clamp(18px, 3vw, 24px)',
+                borderBottom:  isLast ? 'none' : '1px solid var(--sand3)',
+              }}>
+              {/* Icon + title row – icon and eyebrow text share the section accent colour. */}
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <Icon size={16} strokeWidth={1.75} color={accent} />
+                <span className="text-uppercase fw-semibold" style={{ fontSize: '10.5px', letterSpacing: '1.8px', color: accent }}>
+                  {s.title}
+                </span>
+              </div>
+              {/* Body paragraph */}
+              <p className="mb-0" style={{ fontSize: 'clamp(12.5px, 2.5vw, 13.5px)', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.75 }}>{s.body}</p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

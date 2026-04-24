@@ -7,22 +7,28 @@
 //   h       – a housing object from AppContext.housing (fetched from GET /api/housing)
 //   onClick – parent callback; receives the full housing object
 
+import HousingImageCarousel from './HousingImageCarousel';
+
 export default function HousingCard({ h, onClick }) {
   return (
     <div className="hcard card border h-100" onClick={() => onClick(h)}>
 
       {/* ── Image / hero area ── */}
-      <div className="position-relative d-flex align-items-center justify-content-center overflow-hidden"
-        style={{ height: '150px', background: 'linear-gradient(135deg,#e8f0f5,#ccdcec)' }}>
+      <div className="position-relative overflow-hidden">
+        <HousingImageCarousel
+          h={h}
+          height="clamp(160px, 34vw, 220px)"
+          autoPlay
+          intervalMs={2800}
+          roundedTop
+          variant="card"
+        />
 
         {/* Property-type pill badge in the top-left (e.g. "Downtown", "Houses"). */}
         <span className="position-absolute top-0 start-0 m-2 px-2 py-1 rounded-pill bg-white border"
           style={{ fontSize: '9px', fontWeight: 600, color: 'var(--sage)', letterSpacing: '.5px' }}>
           {h.type}
         </span>
-
-        {/* Large neighbourhood emoji as the card's visual. */}
-        <div style={{ fontSize: '3rem' }}>{h.emoji}</div>
       </div>
 
       {/* ── Card body ── */}
