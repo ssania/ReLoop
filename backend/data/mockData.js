@@ -6,20 +6,19 @@
 // in the frontend until real S3 images are uploaded).
 //
 // Key conventions:
-//   owner      – populated User shape { name, avgRating, email } (mirrors Mongoose populate)
+//   owner      – populated User shape { name, avgRating } (mirrors Mongoose populate)
 //   createdAt  – ISO 8601 string (mirrors Mongoose timestamps)
 //   imageUrls  – empty array until S3 upload is wired up
 
 // ── Listings ──────────────────────────────────────────────────────────────────
 // Mirrors: database/models/Listing.js
-// owner is the populated User object: { name, avgRating, email }
-// Frontend reads owner.name for the seller display, owner.avgRating for rating,
-// and owner.email for the Contact Seller mailto link.
+// owner is the populated User object: { name, avgRating }
+// Frontend reads owner.name for the seller display and owner.avgRating for rating.
 
 const initialListings = [
   {
     id: 1,
-    owner:       { name: 'Maria Garcia', avgRating: 4.9, email: 'mgarcia@umass.edu' },
+    owner:       { name: 'Maria Garcia', avgRating: 4.9 },
     title:       'IKEA KALLAX Shelf 4×4 – White',
     description: 'Perfect for dorm or apartment. Minor scratches on back panel only. Easy to disassemble for transport. Selling because graduating.',
     category:    'Furniture',
@@ -34,7 +33,7 @@ const initialListings = [
   },
   {
     id: 2,
-    owner:       { name: 'Dev Patel', avgRating: 5.0, email: 'dpatel@umass.edu' },
+    owner:       { name: 'Dev Patel', avgRating: 5.0 },
     title:       'MacBook Air M1 – 256GB Space Gray',
     description: '2021 M1 MacBook Air. Barely used – mostly stayed in bag. 256GB SSD, 8GB RAM. Original charger and box included. Battery health 97%.',
     category:    'Electronics',
@@ -49,7 +48,7 @@ const initialListings = [
   },
   {
     id: 3,
-    owner:       { name: 'Sam Lee', avgRating: 4.7, email: 'slee@umass.edu' },
+    owner:       { name: 'Sam Lee', avgRating: 4.7 },
     title:       'McMurry Organic Chemistry 12th Ed.',
     description: 'Highlighting in chapters 1–8 only. No torn pages. Perfect for CHEM 261. Selling because course is complete.',
     category:    'Textbooks',
@@ -64,7 +63,7 @@ const initialListings = [
   },
   {
     id: 4,
-    owner:       { name: 'Jordan Torres', avgRating: 4.6, email: 'jtorres@umass.edu' },
+    owner:       { name: 'Jordan Torres', avgRating: 4.6 },
     title:       'Mini Fridge 3.2 cu ft – Black',
     description: 'Works perfectly, just cleaned. Great for dorm rooms. Must pick up from North Apartments. No delivery available.',
     category:    'Appliances',
@@ -79,7 +78,7 @@ const initialListings = [
   },
   {
     id: 5,
-    owner:       { name: 'Priya Kumar', avgRating: 4.8, email: 'pkumar@umass.edu' },
+    owner:       { name: 'Priya Kumar', avgRating: 4.8 },
     title:       'LED Desk Lamp + 4-Port USB Hub',
     description: 'Adjustable color temperature, 4-port USB hub base. Used for one semester. Original box included.',
     category:    'Electronics',
@@ -94,7 +93,7 @@ const initialListings = [
   },
   {
     id: 6,
-    owner:       { name: 'Chris Morgan', avgRating: 4.9, email: 'cmorgan@umass.edu' },
+    owner:       { name: 'Chris Morgan', avgRating: 4.9 },
     title:       'Trek FX3 Hybrid Bike – Small',
     description: '2020 Trek FX3. Serviced and tuned last month. Great for campus commuting. Lights included.',
     category:    'Sports',
@@ -109,7 +108,7 @@ const initialListings = [
   },
   {
     id: 7,
-    owner:       { name: 'Lena Hayes', avgRating: 4.5, email: 'lhayes@umass.edu' },
+    owner:       { name: 'Lena Hayes', avgRating: 4.5 },
     title:       'Queen Bed Frame + Upholstered Headboard',
     description: 'Solid wood queen frame with fabric headboard. Minor scuffs on the frame. No mattress included.',
     category:    'Furniture',
@@ -124,7 +123,7 @@ const initialListings = [
   },
   {
     id: 8,
-    owner:       { name: 'Tom Rivera', avgRating: 4.4, email: 'trivera@umass.edu' },
+    owner:       { name: 'Tom Rivera', avgRating: 4.4 },
     title:       'Stewart Calculus Early Trans. 8th Ed.',
     description: 'Lots of margin notes – great for study. Cover has wear. All pages intact.',
     category:    'Textbooks',
