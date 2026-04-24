@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { Home, Package, Bus, Compass, Phone, Mail, Globe, MapPin } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatDate } from '../data/constants';
+import HousingImageCarousel from './HousingImageCarousel';
 
 export default function HousingDetailModal({ h, onClose }) {
   // showToast is used for the "Contact area managers" button at the bottom.
@@ -37,14 +38,20 @@ export default function HousingDetailModal({ h, onClose }) {
           {/* Floating close button. */}
           <button className="dm-close" onClick={onClose}>✕</button>
 
-          {/* ── Hero image area ── */}
-          <div className="d-flex align-items-center justify-content-center overflow-hidden"
-            style={{ height: 'clamp(160px,28vw,240px)', background: 'linear-gradient(135deg,#e8f0f5,#ccdcec)', borderRadius: '1rem 1rem 0 0' }}>
-            <div style={{ fontSize: 'clamp(3rem,8vw,5rem)' }}>{h.emoji}</div>
-          </div>
-
           {/* ── Modal body ── */}
           <div className="modal-body p-4">
+
+            {/* Hero carousel lives inside the scrollable body so it scrolls
+                away with the rest of the content instead of staying pinned. */}
+            <div className="mb-4" style={{ margin: '-1.5rem -1.5rem 1.5rem' }}>
+              <HousingImageCarousel
+                h={h}
+                showControls
+                showDots
+                roundedTop
+                variant="detail"
+              />
+            </div>
 
             {/* Kicker row – type + "Housing Hub" label with sage dot. */}
             <div className="d-flex align-items-center gap-2 mb-2 text-uppercase fw-semibold" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--sage)' }}>
