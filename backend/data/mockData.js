@@ -2,23 +2,26 @@
 // Single source of truth for seed data while MongoDB is not yet connected.
 // All field names and shapes exactly match the Mongoose schemas in database/models/
 // so that replacing this file with real DB queries requires zero frontend changes,
-// except for the imageUrls / floorPlans.imageUrl fields (emojis are used as placeholders
+// except for the imageUrls / floorPlanUrls fields (emojis are used as placeholders
 // in the frontend until real S3 images are uploaded).
 //
 // Key conventions:
-//   owner      – populated User shape { name, avgRating } (mirrors Mongoose populate)
+//   owner      – populated User shape { name, avgRating, email } (mirrors Mongoose populate)
 //   createdAt  – ISO 8601 string (mirrors Mongoose timestamps)
 //   imageUrls  – empty array until S3 upload is wired up
 
 // ── Listings ──────────────────────────────────────────────────────────────────
 // Mirrors: database/models/Listing.js
-// owner is the populated User object: { name, avgRating }
-// Frontend reads owner.name for the seller display and owner.avgRating for rating.
+// owner is the populated User object: { name, avgRating, email }
+// Frontend reads owner.name for the seller display, owner.avgRating for rating,
+// and owner.email for the Contact Seller mailto link.
+
+// ── Backend mock data ──────────────────────────────────────────────────────────
 
 const initialListings = [
   {
     id: 1,
-    owner:       { name: 'Maria Garcia', avgRating: 4.9 },
+    owner:       { name: 'Maria Garcia', avgRating: 4.9, email: 'mgarcia@umass.edu' },
     title:       'IKEA KALLAX Shelf 4×4 – White',
     description: 'Perfect for dorm or apartment. Minor scratches on back panel only. Easy to disassemble for transport. Selling because graduating.',
     category:    'Furniture',
@@ -33,7 +36,7 @@ const initialListings = [
   },
   {
     id: 2,
-    owner:       { name: 'Dev Patel', avgRating: 5.0 },
+    owner:       { name: 'Dev Patel', avgRating: 5.0, email: 'dpatel@umass.edu' },
     title:       'MacBook Air M1 – 256GB Space Gray',
     description: '2021 M1 MacBook Air. Barely used – mostly stayed in bag. 256GB SSD, 8GB RAM. Original charger and box included. Battery health 97%.',
     category:    'Electronics',
@@ -48,7 +51,7 @@ const initialListings = [
   },
   {
     id: 3,
-    owner:       { name: 'Sam Lee', avgRating: 4.7 },
+    owner:       { name: 'Sam Lee', avgRating: 4.7, email: 'slee@umass.edu' },
     title:       'McMurry Organic Chemistry 12th Ed.',
     description: 'Highlighting in chapters 1–8 only. No torn pages. Perfect for CHEM 261. Selling because course is complete.',
     category:    'Textbooks',
@@ -63,7 +66,7 @@ const initialListings = [
   },
   {
     id: 4,
-    owner:       { name: 'Jordan Torres', avgRating: 4.6 },
+    owner:       { name: 'Jordan Torres', avgRating: 4.6, email: 'jtorres@umass.edu' },
     title:       'Mini Fridge 3.2 cu ft – Black',
     description: 'Works perfectly, just cleaned. Great for dorm rooms. Must pick up from North Apartments. No delivery available.',
     category:    'Appliances',
@@ -78,7 +81,7 @@ const initialListings = [
   },
   {
     id: 5,
-    owner:       { name: 'Priya Kumar', avgRating: 4.8 },
+    owner:       { name: 'Priya Kumar', avgRating: 4.8, email: 'pkumar@umass.edu' },
     title:       'LED Desk Lamp + 4-Port USB Hub',
     description: 'Adjustable color temperature, 4-port USB hub base. Used for one semester. Original box included.',
     category:    'Electronics',
@@ -93,7 +96,7 @@ const initialListings = [
   },
   {
     id: 6,
-    owner:       { name: 'Chris Morgan', avgRating: 4.9 },
+    owner:       { name: 'Chris Morgan', avgRating: 4.9, email: 'cmorgan@umass.edu' },
     title:       'Trek FX3 Hybrid Bike – Small',
     description: '2020 Trek FX3. Serviced and tuned last month. Great for campus commuting. Lights included.',
     category:    'Sports',
@@ -108,7 +111,7 @@ const initialListings = [
   },
   {
     id: 7,
-    owner:       { name: 'Lena Hayes', avgRating: 4.5 },
+    owner:       { name: 'Lena Hayes', avgRating: 4.5, email: 'lhayes@umass.edu' },
     title:       'Queen Bed Frame + Upholstered Headboard',
     description: 'Solid wood queen frame with fabric headboard. Minor scuffs on the frame. No mattress included.',
     category:    'Furniture',
@@ -123,7 +126,7 @@ const initialListings = [
   },
   {
     id: 8,
-    owner:       { name: 'Tom Rivera', avgRating: 4.4 },
+    owner:       { name: 'Tom Rivera', avgRating: 4.4, email: 'trivera@umass.edu' },
     title:       'Stewart Calculus Early Trans. 8th Ed.',
     description: 'Lots of margin notes – great for study. Cover has wear. All pages intact.',
     category:    'Textbooks',
@@ -139,9 +142,6 @@ const initialListings = [
 ];
 
 // ── Housing areas ──────────────────────────────────────────────────────────────
-// Mirrors: database/models/HousingArea.js
-// housingReviews is a denormalised preview array (populated HousingReview docs).
-// reviewer is the populated User shape { name } (mirrors Mongoose populate).
 
 const housing = [
   {
@@ -542,32 +542,13 @@ const housing = [
   },
 ];
 
-// ── Reviews ───────────────────────────────────────────────────────────────────
-// Mirrors: database/models/Review.js
-// reviewer   – populated User shape { name }
-// targetUser – populated User shape { name } (the seller being reviewed)
-
 const myReviews = [
   {
     reviewer:   { name: 'Maria Garcia' },
     targetUser: { name: 'John Doe' },
     stars:      5,
-    comment:    'Super easy transaction. Item exactly as described. Very responsive and friendly.',
+    comment:    'Super easy transaction.',
     createdAt:  '2025-03-12T00:00:00.000Z',
-  },
-  {
-    reviewer:   { name: 'Dev Patel' },
-    targetUser: { name: 'John Doe' },
-    stars:      5,
-    comment:    'Great seller – very responsive. Item was in perfect condition.',
-    createdAt:  '2025-02-08T00:00:00.000Z',
-  },
-  {
-    reviewer:   { name: 'Sam Lee' },
-    targetUser: { name: 'John Doe' },
-    stars:      4,
-    comment:    'Good transaction, showed up on time. Item matched the photos.',
-    createdAt:  '2025-01-25T00:00:00.000Z',
   },
 ];
 
