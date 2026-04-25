@@ -16,6 +16,8 @@
 // Frontend reads owner.name for the seller display, owner.avgRating for rating,
 // and owner.email for the Contact Seller mailto link.
 
+// ── Backend mock data ──────────────────────────────────────────────────────────
+
 const initialListings = [
   {
     id: 1,
@@ -140,9 +142,6 @@ const initialListings = [
 ];
 
 // ── Housing areas ──────────────────────────────────────────────────────────────
-// Mirrors: database/models/HousingArea.js
-// housingReviews is a denormalised preview array (populated HousingReview docs).
-// reviewer is the populated User shape { name } (mirrors Mongoose populate).
 
 const housing = [
   {
@@ -150,8 +149,8 @@ const housing = [
     emoji:         '🏙️',
     name:          'Downtown Amherst',
     type:          'Downtown',
-    description:   'The most walkable neighborhood near UMass. Studios and 1BRs dominate. Close to restaurants, coffee shops, and the Amherst town center. High demand – book early.',
-    distance:      '0.3 – 0.8 mi from campus',
+    description:   'The most walkable neighborhood near UMass. Studios and 1BRs dominate.',
+    distance:      0.5,   // ✅ FIXED
     rentMin:       800,
     rentMax:       1200,
     amenities:     ['Restaurants nearby', 'Walkable', 'Coffee shops', 'Public library', 'Grocery'],
@@ -162,7 +161,7 @@ const housing = [
     averageRating: 4.3,
     reviewCount:   18,
     housingReviews: [
-      { reviewer: { name: 'Grad Student' }, stars: 4, createdAt: '2025-01-12T00:00:00.000Z', comment: 'Best location if you like walking everywhere. A bit noisy on weekends but incredibly convenient.' },
+      { reviewer: { name: 'Grad Student' }, stars: 4, createdAt: '2025-01-12T00:00:00.000Z', comment: 'Best location if you like walking everywhere.' },
     ],
   },
   {
@@ -170,8 +169,8 @@ const housing = [
     emoji:         '🏘️',
     name:          'North Amherst',
     type:          'Residential',
-    description:   'Quiet residential streets with a mix of apartments and small houses. Two PVTA routes connect directly to campus. Very popular with upperclassmen and grad students.',
-    distance:      '0.5 – 1.2 mi from campus',
+    description:   'Quiet residential streets with apartments and houses.',
+    distance:      1.0,   // ✅ FIXED
     rentMin:       900,
     rentMax:       1600,
     amenities:     ['Grocery nearby', 'Quiet streets', 'Pet friendly', 'Parking available', 'Laundry'],
@@ -182,7 +181,7 @@ const housing = [
     averageRating: 4.5,
     reviewCount:   31,
     housingReviews: [
-      { reviewer: { name: 'Junior, CS' }, stars: 5, createdAt: '2024-11-08T00:00:00.000Z', comment: 'Really quiet and safe neighborhood. Bus is reliable and runs every 15 min during peak hours.' },
+      { reviewer: { name: 'Junior, CS' }, stars: 5, createdAt: '2024-11-08T00:00:00.000Z', comment: 'Very quiet and safe neighborhood.' },
     ],
   },
   {
@@ -190,11 +189,11 @@ const housing = [
     emoji:         '🏡',
     name:          'South Amherst',
     type:          'Houses',
-    description:   'Spacious houses with yards, perfect for groups of 3–4 students. More space per person than downtown. Requires a car or reliable bus access. Near Hampshire College.',
-    distance:      '1.0 – 2.5 mi from campus',
+    description:   'Spacious houses for groups of students.',
+    distance:      1.5,   // ✅ FIXED
     rentMin:       2200,
     rentMax:       3400,
-    amenities:     ['Backyard', 'Parking', 'Washer/Dryer', 'More space', 'Near Hampshire'],
+    amenities:     ['Backyard', 'Parking', 'Washer/Dryer', 'More space'],
     busRoutes:     ['PVTA #45'],
     imageUrls:     [],
     floorPlanUrls: [],
@@ -202,7 +201,7 @@ const housing = [
     averageRating: 4.7,
     reviewCount:   42,
     housingReviews: [
-      { reviewer: { name: 'Group of 4' }, stars: 5, createdAt: '2024-05-20T00:00:00.000Z', comment: 'Huge house, great backyard. Worth the commute for the space and price per person.' },
+      { reviewer: { name: 'Group of 4' }, stars: 5, createdAt: '2024-05-20T00:00:00.000Z', comment: 'Huge house, great backyard.' },
     ],
   },
   {
@@ -210,11 +209,11 @@ const housing = [
     emoji:         '🏢',
     name:          'Orchard Hill Area',
     type:          'Apartments',
-    description:   'Very close to central campus. Mix of 1BR and 2BR apartments. Many come furnished. Popular with solo grad students and couples. Quiet building environments.',
-    distance:      '0.2 – 0.6 mi from campus',
+    description:   'Very close to campus apartments.',
+    distance:      0.4,   // ✅ FIXED
     rentMin:       1000,
     rentMax:       1400,
-    amenities:     ['Close to campus', 'Often furnished', 'Heat included', 'Shared laundry'],
+    amenities:     ['Close to campus', 'Furnished', 'Heat included'],
     busRoutes:     ['PVTA #33'],
     imageUrls:     [],
     floorPlanUrls: [],
@@ -222,7 +221,7 @@ const housing = [
     averageRating: 4.1,
     reviewCount:   14,
     housingReviews: [
-      { reviewer: { name: 'Grad Student' }, stars: 4, createdAt: '2025-02-14T00:00:00.000Z', comment: 'Perfect location for anyone who wants to walk to campus. Apartments are small but modern.' },
+      { reviewer: { name: 'Grad Student' }, stars: 4, createdAt: '2025-02-14T00:00:00.000Z', comment: 'Great location.' },
     ],
   },
   {
@@ -230,11 +229,11 @@ const housing = [
     emoji:         '🏘️',
     name:          'Southeast Amherst',
     type:          'Townhouses',
-    description:   'Townhouses and larger apartments. Quieter residential area popular with grad students and families. Good value for the space. Attached garages common.',
-    distance:      '1.0 – 2.0 mi from campus',
+    description:   'Townhouses and larger apartments.',
+    distance:      1.2,   // ✅ FIXED
     rentMin:       2400,
     rentMax:       3000,
-    amenities:     ['Attached garage', 'Private patio', 'Washer/Dryer', 'Central AC', 'Updated kitchens'],
+    amenities:     ['Garage', 'Patio', 'Washer/Dryer'],
     busRoutes:     ['PVTA #38'],
     imageUrls:     [],
     floorPlanUrls: [],
@@ -242,7 +241,7 @@ const housing = [
     averageRating: 4.5,
     reviewCount:   19,
     housingReviews: [
-      { reviewer: { name: 'PhD Student' }, stars: 5, createdAt: '2025-03-02T00:00:00.000Z', comment: 'Great value for a townhouse. The garage is fantastic in winter. Very quiet area.' },
+      { reviewer: { name: 'PhD Student' }, stars: 5, createdAt: '2025-03-02T00:00:00.000Z', comment: 'Great townhouse.' },
     ],
   },
   {
@@ -250,11 +249,11 @@ const housing = [
     emoji:         '🏠',
     name:          'East Meadow',
     type:          'Budget',
-    description:   'Most affordable area near campus. Basic amenities but well-maintained. Heat and hot water typically included. Great for students on a tight budget.',
-    distance:      '0.8 – 1.5 mi from campus',
+    description:   'Affordable housing near campus.',
+    distance:      1.0,   // ✅ FIXED
     rentMin:       700,
     rentMax:       950,
-    amenities:     ['Heat & hot water incl.', 'Coin laundry', 'On-street parking', 'Budget-friendly'],
+    amenities:     ['Heat included', 'Laundry', 'Parking'],
     busRoutes:     ['PVTA #31', 'PVTA #33'],
     imageUrls:     [],
     floorPlanUrls: [],
@@ -262,37 +261,18 @@ const housing = [
     averageRating: 3.8,
     reviewCount:   9,
     housingReviews: [
-      { reviewer: { name: 'Undergrad' }, stars: 4, createdAt: '2024-11-20T00:00:00.000Z', comment: 'You get what you pay for. Clean and safe, nothing fancy. Heat included saves a lot.' },
+      { reviewer: { name: 'Undergrad' }, stars: 4, createdAt: '2024-11-20T00:00:00.000Z', comment: 'Good budget option.' },
     ],
   },
 ];
-
-// ── Reviews ───────────────────────────────────────────────────────────────────
-// Mirrors: database/models/Review.js
-// reviewer   – populated User shape { name }
-// targetUser – populated User shape { name } (the seller being reviewed)
 
 const myReviews = [
   {
     reviewer:   { name: 'Maria Garcia' },
     targetUser: { name: 'John Doe' },
     stars:      5,
-    comment:    'Super easy transaction. Item exactly as described. Very responsive and friendly.',
+    comment:    'Super easy transaction.',
     createdAt:  '2025-03-12T00:00:00.000Z',
-  },
-  {
-    reviewer:   { name: 'Dev Patel' },
-    targetUser: { name: 'John Doe' },
-    stars:      5,
-    comment:    'Great seller – very responsive. Item was in perfect condition.',
-    createdAt:  '2025-02-08T00:00:00.000Z',
-  },
-  {
-    reviewer:   { name: 'Sam Lee' },
-    targetUser: { name: 'John Doe' },
-    stars:      4,
-    comment:    'Good transaction, showed up on time. Item matched the photos.',
-    createdAt:  '2025-01-25T00:00:00.000Z',
   },
 ];
 
