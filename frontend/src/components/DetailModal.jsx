@@ -124,13 +124,20 @@ export default function DetailModal({ item, onClose }) {
 
             {/* Actions */}
             <div className="d-flex gap-2">
-              <button
-                className="btn btn-dark flex-grow-1 rounded-3 py-3"
-                style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }}
-                onClick={() => showToast(`Message sent to ${item.owner.name.split(' ')[0]}!`, '💬')}
-              >
-                💬 Contact seller
-              </button>
+              <a
+  href={`mailto:${item.owner.email}?subject=${encodeURIComponent(
+    `Interested in ${item.title}`
+  )}&body=${encodeURIComponent(
+    `Hi ${item.owner.name.split(' ')[0]}, I am interested in your listing for ${item.title} ($${item.price}). Is it still available?`
+  )}`}
+  className="btn btn-dark flex-grow-1 rounded-3 py-3 text-decoration-none text-center"
+  style={{
+    fontFamily: 'DM Sans, sans-serif',
+    fontSize: '14px',
+  }}
+>
+  💬 Contact Seller
+</a>
               <button className={`dm-btn-save${saved ? ' saved' : ''}`} onClick={() => toggleFavorite(item.id)}>
                 {saved ? '♥' : '♡'}
               </button>

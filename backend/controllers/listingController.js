@@ -24,8 +24,20 @@ const getListings = async (_req, res) => {
 const createListing = async (req, res) => {
   try {
     const ownerId = await getDefaultOwner();
-    const { owner, ...rest } = req.body; // strip the frontend's plain-object owner
-    const newListing = await ListingModel.create({ ...rest, owner: ownerId });
+    const { owner, ...rest } = req.body;
+
+    // ✅ Get S3 uploaded images
+    const imageUrls = req.files ? req.files.map(file => ({
+      url: file.location,
+      key: file.key
+    })) : [];
+
+    const newListing = await ListingModel.create({
+      ...rest,
+      owner: ownerId,
+      imageUrls
+    });
+
     res.status(201).json(newListing);
   } catch (err) {
     console.error('Failed to create listing:', err);
