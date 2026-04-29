@@ -3,6 +3,8 @@ const ListingModel = require('../models/Listing');
 const { ListingMongoose } = ListingModel;
 const User = require('../models/User');
 const { sendBuyerNomination, sendSellerConfirmation } = require('../config/mailer');
+const { s3 } = require('../config/s3');
+const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
 // Placeholder until auth is implemented — resolves to the "John Doe" seed user.
 async function getDefaultOwner() {
@@ -60,10 +62,22 @@ const updateListing = async (req, res) => {
 };
 
 // DELETE /api/listings/:id
+// Also deletes all associated images from S3 using the stored keys
 const deleteListing = async (req, res) => {
   try {
-    const deleted = await ListingModel.remove(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Listing not found' });
+    const listing = await ListingMongoose.findById(req.params.id).lean();
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    if (listing.imageUrls?.length > 0) {
+      await s3.send(new DeleteObjectsCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Delete: {
+          Objects: listing.imageUrls.map(img => ({ Key: img.key })),
+        },
+      }));
+    }
+
+    await ListingMongoose.findByIdAndDelete(req.params.id);
     res.status(204).send();
   } catch (err) {
     console.error('Failed to delete listing:', err);

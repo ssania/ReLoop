@@ -72,20 +72,10 @@ export function AppProvider({ children }) {
     }
   }, [favoriteIds, showToast]);
 
-  const addListing = useCallback(async (item) => {
-    try {
-      const res = await fetch(`${API}/listings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item),
-      });
-      const created = await res.json();
-      setListings(prev => [created, ...prev]);
-    } catch (err) {
-      console.error('Failed to create listing:', err);
-      showToast('Could not create listing', '⚠️');
-    }
-  }, [showToast]);
+  // CreateListingModal handles the API call itself and passes the created listing here
+  const addListing = useCallback((item) => {
+    setListings(prev => [item, ...prev]);
+  }, []);
 
   const updateListing = useCallback(async (id, changes) => {
     try {
