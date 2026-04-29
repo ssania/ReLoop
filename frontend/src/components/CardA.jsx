@@ -56,8 +56,10 @@ export default function CardA({ item, onClick }) {
           {saved ? '♥' : '♡'}
         </button>
 
-        {/* Emoji placeholder — replaced by real image once imageUrls are populated. */}
-        <div className="card-emoji">{item.emoji}</div>
+        {item.imageUrls?.length > 0
+          ? <img src={item.imageUrls[0].url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
+          : <div className="card-emoji">{item.emoji}</div>
+        }
       </div>
 
       {/* ── Card body ── */}
