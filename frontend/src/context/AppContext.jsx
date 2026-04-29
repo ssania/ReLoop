@@ -113,10 +113,41 @@ export function AppProvider({ children }) {
     }
   }, [showToast]);
 
+  const confirmPurchase = useCallback(async (id) => {
+    try {
+      const res = await fetch(`${API}/listings/${id}/confirm`, { method: 'PATCH' });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.message || 'Could not confirm purchase', '⚠️'); return false; }
+      setListings(prev => prev.map(l => l.id === id ? { ...l, status: 'Sold' } : l));
+      showToast('Purchase confirmed!', '✅');
+      return true;
+    } catch (err) {
+      console.error('Failed to confirm purchase:', err);
+      showToast('Could not confirm purchase', '⚠️');
+      return false;
+    }
+  }, [showToast]);
+
+  const rejectPurchase = useCallback(async (id) => {
+    try {
+      const res = await fetch(`${API}/listings/${id}/reject`, { method: 'PATCH' });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.message || 'Could not reject purchase', '⚠️'); return false; }
+      setListings(prev => prev.map(l => l.id === id ? { ...l, status: 'Available', buyer: null } : l));
+      showToast('Purchase rejected — listing back to Available', '❌');
+      return true;
+    } catch (err) {
+      console.error('Failed to reject purchase:', err);
+      showToast('Could not reject purchase', '⚠️');
+      return false;
+    }
+  }, [showToast]);
+
   return (
     <AppContext.Provider value={{
       listings, housing, loading,
-      addListing, updateListing, deleteListing, favoriteIds, toggleFavorite, showToast, toast,
+      addListing, updateListing, deleteListing, favoriteIds, toggleFavorite,
+      confirmPurchase, rejectPurchase, showToast, toast,
     }}>
       {children}
     </AppContext.Provider>

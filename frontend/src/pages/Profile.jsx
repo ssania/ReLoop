@@ -58,10 +58,10 @@ function DeleteConfirmModal({ item, onConfirm, onCancel }) {
   );
 }
 
-const TABS = [['listings', 'My listings'], ['saved', 'Saved items'], ['reviews', 'Reviews']];
+const TABS = [['listings', 'My listings'], ['saved', 'Saved items'], ['pending', 'Pending'], ['purchased', 'Purchased'], ['reviews', 'Reviews']];
 
 export default function Profile() {
-  const { listings, favoriteIds, deleteListing, showToast } = useApp();
+  const { listings, favoriteIds, deleteListing, confirmPurchase, rejectPurchase, showToast } = useApp();
   const [tab, setTab] = useState('listings');
   const [myReviews, setMyReviews] = useState([]);
 
@@ -90,6 +90,12 @@ export default function Profile() {
 
   // favoriteItems: derived from the full listings array filtered by favoriteIds Set.
   const favoriteItems = listings.filter(m => favoriteIds.has(m.id));
+
+  // pendingItems: listings where John Doe is the nominated buyer awaiting confirmation.
+  const pendingItems = listings.filter(m => m.status === 'pending-confirmation' && m.buyer?.name === 'John Doe');
+
+  // purchasedItems: listings John Doe confirmed buying.
+  const purchasedItems = listings.filter(m => m.status === 'Sold' && m.buyer?.name === 'John Doe');
 
   // Stats: active count is live from myListings; favorites count is live from context.
   const statCards = [
@@ -208,6 +214,74 @@ export default function Profile() {
               <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🏷️</div>
               <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '16px' }}>No saved items yet</div>
               <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)' }}>Browse the marketplace and tap ♡ to save listings for later.</p>
+            </div>
+          )
+        )}
+
+        {/* ── Pending tab ───────────────────────────────────────────────── */}
+        {tab === 'pending' && (
+          pendingItems.length ? (
+            <div className="d-flex flex-column gap-3">
+              {pendingItems.map(item => (
+                <div key={item.id} className="card border p-4 rounded-4">
+                  <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                      <div className="fw-bold" style={{ fontFamily: 'Syne,sans-serif', fontSize: '15px' }}>{item.title}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
+                        ${item.price} · {item.condition} · Seller: {item.owner?.name}
+                      </div>
+                      <div className="mt-1" style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                        ⏳ {item.owner?.name} marked you as the buyer — confirm or reject below.
+                      </div>
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-dark btn-sm rounded-3"
+                        style={{ fontSize: '12px', padding: '6px 16px' }}
+                        onClick={() => confirmPurchase(item.id)}
+                      >
+                        ✅ Yes, I bought this
+                      </button>
+                      <button
+                        className="btn btn-outline-danger btn-sm rounded-3"
+                        style={{ fontSize: '12px', padding: '6px 16px' }}
+                        onClick={() => rejectPurchase(item.id)}
+                      >
+                        ❌ No, I didn't
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-5">
+              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>⏳</div>
+              <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '16px' }}>No pending confirmations</div>
+              <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)' }}>
+                When a seller marks you as the buyer, it will appear here for you to confirm or reject.
+              </p>
+            </div>
+          )
+        )}
+
+        {/* ── Purchased tab ─────────────────────────────────────────────── */}
+        {tab === 'purchased' && (
+          purchasedItems.length ? (
+            <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+              {purchasedItems.map(item => (
+                <div key={item.id} className="col">
+                  <CardA item={item} onClick={setSelectedItem} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-5">
+              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🛍️</div>
+              <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '16px' }}>No purchases yet</div>
+              <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)' }}>
+                Items you've confirmed buying will appear here.
+              </p>
             </div>
           )
         )}

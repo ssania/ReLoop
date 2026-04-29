@@ -12,33 +12,67 @@ import { useApp } from '../context/AppContext';
 
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
 const CATEGORIES = ['Furniture', 'Textbooks', 'Electronics', 'Clothing', 'Appliances', 'Sports', 'Other'];
-const STATUSES = ['Available', 'In-talk', 'Sold'];
+const STATUSES   = ['Available', 'In-talk', 'Sold'];
+
+const API = 'http://localhost:5002/api';
 
 export default function EditListingModal({ item, onClose }) {
   const { updateListing, showToast } = useApp();
 
-  // Pre-fill all fields from the existing listing.
-  const [title, setTitle]         = useState(item.title);
-  const [category, setCategory]   = useState(item.category);
-  const [price, setPrice]         = useState(String(item.price));
-  const [condition, setCondition] = useState(item.condition);
-  const [status, setStatus]       = useState(item.status);
+  const [title, setTitle]           = useState(item.title);
+  const [category, setCategory]     = useState(item.category);
+  const [price, setPrice]           = useState(String(item.price));
+  const [condition, setCondition]   = useState(item.condition);
+  const [status, setStatus]         = useState(item.status);
   const [description, setDescription] = useState(item.description);
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [loading, setLoading]       = useState(false);
 
-  // Lock body scroll while modal is open; restore on unmount.
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  function save() {
+  async function save() {
     if (!title.trim() || !price) {
       showToast('Title and price are required', '⚠️');
       return;
     }
 
-    // Push the changed fields into global state via context.
-    // ownedByUser is preserved from the original item (not overwritten here).
+    // When seller picks Sold, nominate a buyer instead of a plain update
+    if (status === 'Sold') {
+      if (!buyerEmail.trim()) {
+        showToast('Enter the buyer\'s ReLoop email to mark as Sold', '⚠️');
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await fetch(`${API}/listings/${item.id}/nominate`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ buyerEmail: buyerEmail.trim() }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showToast(data.message || 'Could not nominate buyer', '⚠️');
+          return;
+        }
+        // Also update the other fields via the normal update
+        await updateListing(item.id, {
+          title: title.trim(), category, price: +price,
+          condition, description: description || 'No description provided.',
+          tags: [category, condition],
+        });
+        showToast('Buyer notified — awaiting their confirmation', '📧');
+        onClose();
+      } catch {
+        showToast('Could not nominate buyer', '⚠️');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     updateListing(item.id, {
       title: title.trim(),
       category,
@@ -54,7 +88,6 @@ export default function EditListingModal({ item, onClose }) {
   }
 
   return (
-    // Backdrop — click outside dialog to close.
     <div className="modal fade show d-block" tabIndex="-1"
       style={{ background: 'rgba(24,24,27,.55)', backdropFilter: 'blur(4px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
@@ -103,7 +136,7 @@ export default function EditListingModal({ item, onClose }) {
               </div>
             </div>
 
-            {/* Status — lets the seller mark as In-talk or Sold */}
+            {/* Status pills */}
             <div>
               <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Status</label>
               <div className="d-flex flex-wrap gap-2">
@@ -113,6 +146,25 @@ export default function EditListingModal({ item, onClose }) {
               </div>
             </div>
 
+            {/* Buyer email — only shown when seller picks Sold */}
+            {status === 'Sold' && (
+              <div>
+                <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>
+                  Buyer's ReLoop email
+                </label>
+                <input
+                  className="form-control"
+                  type="email"
+                  placeholder="buyer@umass.edu"
+                  value={buyerEmail}
+                  onChange={e => setBuyerEmail(e.target.value)}
+                />
+                <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>
+                  The buyer will receive an email to confirm or reject the purchase.
+                </div>
+              </div>
+            )}
+
             {/* Description */}
             <div>
               <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Description</label>
@@ -120,8 +172,13 @@ export default function EditListingModal({ item, onClose }) {
             </div>
 
             {/* Save button */}
-            <button className="btn btn-dark w-100 rounded-3 py-3" style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }} onClick={save}>
-              Save changes
+            <button
+              className="btn btn-dark w-100 rounded-3 py-3"
+              style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }}
+              onClick={save}
+              disabled={loading}
+            >
+              {loading ? 'Notifying buyer…' : status === 'Sold' ? 'Notify buyer' : 'Save changes'}
             </button>
           </div>
         </div>

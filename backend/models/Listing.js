@@ -17,7 +17,8 @@ const listingSchema = new mongoose.Schema({
   category:    { type: String },
   price:       { type: Number, required: true },
   condition:   { type: String, enum: ['New', 'Like New', 'Good', 'Fair'] },
-  status:      { type: String, enum: ['Available', 'In-talk', 'Sold'], default: 'Available' },
+  status:      { type: String, enum: ['Available', 'In-talk', 'pending-confirmation', 'Sold'], default: 'Available' },
+  buyer:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   imageUrls:   [{ 
     url: { type: String, required: true }, 
     key: { type: String, required: true } 
@@ -38,7 +39,8 @@ const ListingModel = {
   // ✅ GET ALL LISTINGS
   async getAll() {
     const docs = await ListingMongoose.find({})
-      .populate('owner', 'name avgRating email') // ✅ FIXED
+      .populate('owner', 'name avgRating email')
+      .populate('buyer', 'name email')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -61,7 +63,8 @@ const ListingModel = {
       changes,
       { new: true }
     )
-      .populate('owner', 'name avgRating email') // ✅ FIXED
+      .populate('owner', 'name avgRating email')
+      .populate('buyer', 'name email')
       .lean();
 
     return normalize(doc);
