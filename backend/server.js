@@ -3,6 +3,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
+// ✅ NEW: import logger
+const logger = require('./logger');
+
 dotenv.config();
 
 const app = express();
@@ -10,22 +13,37 @@ const app = express();
 connectDB();
 
 // ── Middleware ─────────────────────────────────────────────────────────────────
-// cors() allows the React dev server (localhost:5173) to call this API.
-// Without this the browser would block cross-origin requests.
 app.use(cors());
-
-// express.json() parses incoming JSON request bodies (needed for POST /api/listings).
 app.use(express.json());
 
+// ✅ NEW: Logging middleware (ADD HERE)
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on("finish", () => {
+    logger.info({
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      latency: Date.now() - start,
+    });
+  });
+
+  next();
+});
+
 // ── Routes ─────────────────────────────────────────────────────────────────────
-// Each router handles a resource. Prefix all API routes with /api/ so they are
-// clearly separated from any static file serving added later.
 app.use('/api/listings', require('./routes/listingRoutes'));
 app.use('/api/housing',  require('./routes/housingRoutes'));
 app.use('/api/reviews',  require('./routes/reviewRoutes'));
 app.use('/api/favorites', require('./routes/favoriteRoutes'));
 
-// Health-check endpoint – useful for confirming the server is up.
+// ✅ ADD HERE
+app.get("/test-500", (req, res) => {
+  res.status(500).send("Test 500 error");
+});
+
+// Health-check endpoint
 app.get('/', (req, res) => {
   res.json({ message: 'ReLoop API is running' });
 });
