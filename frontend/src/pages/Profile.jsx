@@ -16,8 +16,11 @@ import { useApp } from '../context/AppContext';
 import CardA from '../components/CardA';
 import DetailModal from '../components/DetailModal';
 import EditListingModal from '../components/EditListingModal';
+import ReviewModal from '../components/ReviewModal';
 import { formatDate } from '../data/constants';
 import CreateListingModal from '../components/CreateListingModal';
+
+const API = 'http://localhost:5002/api';
 
 // Inline confirmation modal — shown before permanently deleting a listing.
 function DeleteConfirmModal({ item, onConfirm, onCancel }) {
@@ -58,12 +61,11 @@ function DeleteConfirmModal({ item, onConfirm, onCancel }) {
   );
 }
 
-const TABS = [['listings', 'My listings'], ['saved', 'Saved items'], ['pending', 'Pending'], ['purchased', 'Purchased'], ['reviews', 'Reviews']];
+const TABS = [['listings', 'My listings'], ['saved', 'Saved items'], ['pending', 'Awaiting Confirmation'], ['purchased', 'Purchased'], ['reviews', 'Reviews']];
 
 export default function Profile() {
   const { listings, favoriteIds, deleteListing, confirmPurchase, rejectPurchase, showToast } = useApp();
   const [tab, setTab] = useState('listings');
-  const [myReviews, setMyReviews] = useState([]);
 
   // selectedItem: opens DetailModal when a card is clicked normally.
   const [selectedItem, setSelectedItem] = useState(null);
@@ -77,13 +79,48 @@ export default function Profile() {
   // createOpen: controls visibility of the CreateListingModal.
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Fetch this user's received reviews from the backend on mount.
+  // reviewTarget: { listing, existing } — opens ReviewModal from Purchased tab.
+  const [reviewTarget, setReviewTarget] = useState(null);
+
+  // myReviews: reviews John Doe received as a seller. Fetched when Reviews tab opens.
+  const [myReviews, setMyReviews] = useState([]);
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
+
+  // myGivenReviews: reviews John Doe submitted as a buyer, keyed by listingId.
+  // Populated once so Purchased tab can show Edit vs Give Review.
+  const [givenReviews, setGivenReviews] = useState({}); // { listingId: reviewDoc }
+
+  // Fetch John Doe's own seller reviews when the Reviews tab is first opened.
+  // His _id can be found from: a listing he owns OR a listing where he is the buyer.
   useEffect(() => {
-    fetch('http://localhost:5002/api/reviews')
-      .then(res => res.json())
-      .then(data => setMyReviews(data))
-      .catch(err => console.error('Failed to fetch reviews:', err));
-  }, []);
+    if (tab !== 'reviews' || reviewsLoaded) return;
+    const johnListing = listings.find(l => l.owner?.name === 'John Doe');
+    const johnBought  = listings.find(l => l.buyer?.name === 'John Doe');
+    const sellerId = johnListing?.owner?._id ?? johnBought?.buyer?._id ?? null;
+    if (!sellerId) return;
+    fetch(`${API}/reviews?sellerId=${sellerId}`)
+      .then(r => r.json())
+      .then(data => { setMyReviews(data); setReviewsLoaded(true); })
+      .catch(err => console.error('Failed to fetch seller reviews:', err));
+  }, [tab, reviewsLoaded, listings]);
+
+  // Fetch reviews John Doe has given as a buyer when Purchased tab opens.
+  useEffect(() => {
+    if (tab !== 'purchased') return;
+    // Collect the seller IDs from purchased listings, then fetch reviews per listing.
+    // Simpler: fetch all reviews where reviewer = John Doe by querying each listing.
+    // We do this by fetching GET /api/reviews?sellerId for each unique seller and
+    // cross-referencing, but that's expensive. Instead we store givenReviews by
+    // listingId — the backend returns listingRef on each review doc.
+    fetch(`${API}/reviews/given`)
+      .then(r => r.json())
+      .then(data => {
+        const map = {};
+        data.forEach(r => { map[r.listingRef] = r; });
+        setGivenReviews(map);
+      })
+      .catch(() => {}); // endpoint added below
+  }, [tab]);
 
   // myListings: listings owned by the current user (John Doe until auth is implemented).
   const myListings = listings.filter(m => m.owner?.name === 'John Doe');
@@ -91,8 +128,11 @@ export default function Profile() {
   // favoriteItems: derived from the full listings array filtered by favoriteIds Set.
   const favoriteItems = listings.filter(m => favoriteIds.has(m.id));
 
-  // pendingItems: listings where John Doe is the nominated buyer awaiting confirmation.
-  const pendingItems = listings.filter(m => m.status === 'pending-confirmation' && m.buyer?.name === 'John Doe');
+  // asBuyer: listings where John Doe was nominated as buyer and needs to confirm/reject.
+  const asBuyer = listings.filter(m => m.status === 'pending-confirmation' && m.buyer?.name === 'John Doe');
+
+  // asSeller: listings where John Doe is the seller and has nominated a buyer, waiting for their response.
+  const asSeller = listings.filter(m => m.status === 'pending-confirmation' && m.owner?.name === 'John Doe');
 
   // purchasedItems: listings John Doe confirmed buying.
   const purchasedItems = listings.filter(m => m.status === 'Sold' && m.buyer?.name === 'John Doe');
@@ -218,62 +258,126 @@ export default function Profile() {
           )
         )}
 
-        {/* ── Pending tab ───────────────────────────────────────────────── */}
+        {/* ── Awaiting Confirmation tab ─────────────────────────────────── */}
         {tab === 'pending' && (
-          pendingItems.length ? (
-            <div className="d-flex flex-column gap-3">
-              {pendingItems.map(item => (
-                <div key={item.id} className="card border p-4 rounded-4">
-                  <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                    <div>
-                      <div className="fw-bold" style={{ fontFamily: 'Syne,sans-serif', fontSize: '15px' }}>{item.title}</div>
+          <div className="row g-4">
+            {/* As Buyer */}
+            <div className="col-12 col-md-6">
+              <div className="fw-semibold mb-3" style={{ fontFamily: 'Syne,sans-serif', fontSize: '14px', letterSpacing: '-.2px' }}>
+                As Buyer
+              </div>
+              {asBuyer.length ? (
+                <div className="d-flex flex-column gap-3">
+                  {asBuyer.map(item => (
+                    <div key={item.id} className="card border p-4 rounded-4">
+                      <div className="fw-bold text-truncate" style={{ fontFamily: 'Syne,sans-serif', fontSize: '14px' }}>{item.title}</div>
                       <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
                         ${item.price} · {item.condition} · Seller: {item.owner?.name}
                       </div>
-                      <div className="mt-1" style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                        ⏳ {item.owner?.name} marked you as the buyer — confirm or reject below.
+                      <div className="mt-1 mb-3" style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                        ⏳ {item.owner?.name} nominated you as the buyer.
+                      </div>
+                      <div className="d-flex gap-2">
+                        <button
+                          className="btn btn-dark btn-sm rounded-3 flex-grow-1"
+                          style={{ fontSize: '12px', padding: '6px 12px' }}
+                          onClick={() => confirmPurchase(item.id)}
+                        >
+                          ✅ Yes, I bought this
+                        </button>
+                        <button
+                          className="btn btn-outline-danger btn-sm rounded-3 flex-grow-1"
+                          style={{ fontSize: '12px', padding: '6px 12px' }}
+                          onClick={() => rejectPurchase(item.id)}
+                        >
+                          ❌ No, I didn't
+                        </button>
                       </div>
                     </div>
-                    <div className="d-flex gap-2">
-                      <button
-                        className="btn btn-dark btn-sm rounded-3"
-                        style={{ fontSize: '12px', padding: '6px 16px' }}
-                        onClick={() => confirmPurchase(item.id)}
-                      >
-                        ✅ Yes, I bought this
-                      </button>
-                      <button
-                        className="btn btn-outline-danger btn-sm rounded-3"
-                        style={{ fontSize: '12px', padding: '6px 16px' }}
-                        onClick={() => rejectPurchase(item.id)}
-                      >
-                        ❌ No, I didn't
-                      </button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="text-center py-5" style={{ background: 'var(--sand)', borderRadius: '14px' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
+                  <div style={{ fontSize: '13px', color: 'var(--muted)', fontWeight: 300 }}>No nominations yet</div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-5">
-              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>⏳</div>
-              <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '16px' }}>No pending confirmations</div>
-              <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)' }}>
-                When a seller marks you as the buyer, it will appear here for you to confirm or reject.
-              </p>
+
+            {/* As Seller */}
+            <div className="col-12 col-md-6">
+              <div className="fw-semibold mb-3" style={{ fontFamily: 'Syne,sans-serif', fontSize: '14px', letterSpacing: '-.2px' }}>
+                As Seller
+              </div>
+              {asSeller.length ? (
+                <div className="d-flex flex-column gap-3">
+                  {asSeller.map(item => (
+                    <div key={item.id} className="card border p-4 rounded-4">
+                      <div className="fw-bold text-truncate" style={{ fontFamily: 'Syne,sans-serif', fontSize: '14px' }}>{item.title}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
+                        ${item.price} · {item.condition}
+                      </div>
+                      <div className="mt-1" style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                        ⏳ Waiting for <strong>{item.buyer?.name}</strong> to confirm.
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-5" style={{ background: 'var(--sand)', borderRadius: '14px' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🤝</div>
+                  <div style={{ fontSize: '13px', color: 'var(--muted)', fontWeight: 300 }}>No pending nominations</div>
+                </div>
+              )}
             </div>
-          )
+          </div>
         )}
 
         {/* ── Purchased tab ─────────────────────────────────────────────── */}
         {tab === 'purchased' && (
           purchasedItems.length ? (
-            <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
-              {purchasedItems.map(item => (
-                <div key={item.id} className="col">
-                  <CardA item={item} onClick={setSelectedItem} />
-                </div>
-              ))}
+            <div className="d-flex flex-column gap-3">
+              {purchasedItems.map(item => {
+                const existing = givenReviews[item.id] ?? null;
+                return (
+                  <div key={item.id} className="card border p-4 rounded-4">
+                    <div className="d-flex align-items-start justify-content-between flex-wrap gap-3">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="fw-bold text-truncate" style={{ fontFamily: 'Syne,sans-serif', fontSize: '15px' }}>{item.title}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
+                          ${item.price} · {item.condition} · Sold by {item.owner?.name}
+                        </div>
+                        {existing && (
+                          <div className="mt-2 d-flex align-items-center gap-2">
+                            <span style={{ color: '#f59e0b', fontSize: '13px' }}>
+                              {'★'.repeat(existing.stars)}{'☆'.repeat(5 - existing.stars)}
+                            </span>
+                            {existing.comment && (
+                              <span style={{ fontSize: '12px', color: 'var(--faint)', fontStyle: 'italic' }}>
+                                "{existing.comment}"
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        className="btn btn-sm rounded-3"
+                        style={{
+                          fontSize: '12px',
+                          padding: '6px 14px',
+                          background: existing ? 'var(--sand)' : '#18181b',
+                          color: existing ? 'var(--faint)' : '#fff',
+                          border: existing ? '1px solid var(--sand3)' : 'none',
+                          flexShrink: 0,
+                        }}
+                        onClick={() => setReviewTarget({ listing: item, existing })}
+                      >
+                        {existing ? '✏️ Edit review' : '⭐ Give review'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-5">
@@ -286,23 +390,27 @@ export default function Profile() {
           )
         )}
 
-        {/* ── Reviews tab ───────────────────────────────────────────────── */}
+        {/* ── Reviews tab ── reviews John Doe received as a seller ──────── */}
         {tab === 'reviews' && (
           myReviews.length ? (
             <div className="d-flex flex-column gap-3">
-              {myReviews.map((r, i) => (
-                <div key={i} className="card border p-4" style={{ borderRadius: '14px' }}>
+              {myReviews.map(r => (
+                <div key={r._id} className="card border p-4" style={{ borderRadius: '14px' }}>
                   <div className="d-flex align-items-center gap-3 mb-2">
                     <div className="card-avatar" style={{ width: '36px', height: '36px', fontSize: '12px' }}>
-                      {r.reviewer.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                      {r.reviewer?.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                     </div>
                     <div className="flex-grow-1">
-                      <div className="fw-medium" style={{ fontSize: '13px' }}>{r.reviewer.name}</div>
+                      <div className="fw-medium" style={{ fontSize: '13px' }}>{r.reviewer?.name}</div>
                       <div style={{ fontSize: '11px', color: 'var(--muted)' }}>{formatDate(r.createdAt)}</div>
                     </div>
-                    <div style={{ fontSize: '12px' }}>{'⭐'.repeat(r.stars)}</div>
+                    <div style={{ color: '#f59e0b', fontSize: '14px' }}>
+                      {'★'.repeat(r.stars)}{'☆'.repeat(5 - r.stars)}
+                    </div>
                   </div>
-                  <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.7 }}>{r.comment}</p>
+                  {r.comment && (
+                    <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.7 }}>{r.comment}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -337,6 +445,34 @@ export default function Profile() {
 
       {/* CreateListingModal — opened from the hero button; stays on Profile after submit. */}
       {createOpen && <CreateListingModal onClose={() => setCreateOpen(false)} />}
+
+      {/* ReviewModal — opened from the Purchased tab. */}
+      {reviewTarget && (
+        <ReviewModal
+          listing={reviewTarget.listing}
+          existing={reviewTarget.existing}
+          onClose={() => setReviewTarget(null)}
+          onSaved={(savedReview) => {
+            // Update givenReviews map so the card reflects the new/edited review immediately
+            setGivenReviews(prev => ({
+              ...prev,
+              [reviewTarget.listing.id]: savedReview,
+            }));
+            showToast(reviewTarget.existing ? 'Review updated!' : 'Review submitted!', '⭐');
+            // Invalidate seller reviews cache so Reviews tab refetches
+            setReviewsLoaded(false);
+          }}
+          onDeleted={() => {
+            setGivenReviews(prev => {
+              const next = { ...prev };
+              delete next[reviewTarget.listing.id];
+              return next;
+            });
+            showToast('Review deleted', '🗑️');
+            setReviewsLoaded(false);
+          }}
+        />
+      )}
     </>
   );
 }
