@@ -8,39 +8,36 @@
 
 import { Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Toast from './components/Toast';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Housing from './pages/Housing';
 import Marketplace from './pages/Marketplace';
 import Profile from './pages/Profile';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 
 export default function App() {
   return (
-    // AppProvider supplies listings, favoriteIds, and showToast to the whole tree.
-    <AppProvider>
-      {/* Fixed top navbar – always visible regardless of active route. */}
-      <Navbar />
-
-      {/* paddingTop offsets the fixed navbar so page content is not hidden underneath. */}
-      <main style={{ paddingTop: 'var(--nav-h)' }}>
-        <Routes>
-          {/* "/" – landing page with hero, service cards, and recent listings. */}
-          <Route path="/" element={<Home />} />
-
-          {/* "/housing" – public neighborhood research hub, no auth required. */}
-          <Route path="/housing" element={<Housing />} />
-
-          {/* "/marketplace" – verified student buy/sell board. */}
-          <Route path="/marketplace" element={<Marketplace />} />
-
-          {/* "/profile" – current user's listings, saved items, and reviews. */}
-          <Route path="/profile" element={<Profile />} />
-        </Routes>
-      </main>
-
-      {/* Toast notification overlay – reads from AppContext and is shown app-wide. */}
-      <Toast />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <Navbar />
+        <main style={{ paddingTop: 'var(--nav-h)' }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/housing" element={<Housing />} />
+            <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+          </Routes>
+        </main>
+        <Toast />
+      </AppProvider>
+    </AuthProvider>
   );
 }
