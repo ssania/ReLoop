@@ -13,7 +13,7 @@
 //   item.owner.name      → seller name + avatar initials
 //   item.owner.avgRating → seller star rating
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { IMG_BG, formatDate } from '../data/constants';
 
@@ -24,11 +24,13 @@ function statusClass(s) {
 }
 
 export default function DetailModal({ item, onClose }) {
-  const { savedIds, toggleSave, showToast } = useApp();
+  const { favoriteIds, toggleFavorite, showToast } = useApp();
 
-  const saved    = savedIds.has(item.id);
+  const saved    = favoriteIds.has(item.id);
   const bg       = IMG_BG[item.category] || IMG_BG.Other;
   const initials = item.owner.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const images   = item.imageUrls || [];
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -45,15 +47,48 @@ export default function DetailModal({ item, onClose }) {
 
           <button className="dm-close" onClick={onClose}>✕</button>
 
-          {/* ── Hero image area ── */}
+          {/* ── Hero image / carousel ── */}
           <div className="d-flex align-items-center justify-content-center position-relative overflow-hidden"
             style={{ height: 'clamp(200px,35vw,300px)', background: bg }}>
-            <span className={`card-status position-absolute top-0 start-0 m-3 ${statusClass(item.status)}`}>
+
+            <span className={`card-status position-absolute top-0 start-0 m-3 ${statusClass(item.status)}`} style={{ zIndex: 3 }}>
               <div className="card-status-dot"></div>
               <span className="card-status-label">{item.status}</span>
             </span>
-            {/* Emoji placeholder — replaced by real image once imageUrls are populated. */}
-            <div style={{ fontSize: 'clamp(4rem,10vw,6rem)' }}>{item.emoji}</div>
+
+            {images.length > 0 ? (
+              <>
+                <img
+                  src={images[current].url}
+                  alt={`${item.title} ${current + 1}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                />
+                {images.length > 1 && (
+                  <>
+                    {/* Prev button */}
+                    <button
+                      onClick={e => { e.stopPropagation(); setCurrent(i => (i - 1 + images.length) % images.length); }}
+                      style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >‹</button>
+                    {/* Next button */}
+                    <button
+                      onClick={e => { e.stopPropagation(); setCurrent(i => (i + 1) % images.length); }}
+                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >›</button>
+                    {/* Dot indicators */}
+                    <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 3, display: 'flex', gap: '6px' }}>
+                      {images.map((_, i) => (
+                        <div key={i} onClick={e => { e.stopPropagation(); setCurrent(i); }}
+                          style={{ width: '6px', height: '6px', borderRadius: '50%', background: i === current ? '#fff' : 'rgba(255,255,255,0.45)', cursor: 'pointer', transition: 'background 0.2s' }}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div style={{ fontSize: 'clamp(4rem,10vw,6rem)' }}>{item.emoji}</div>
+            )}
           </div>
 
           {/* ── Modal body ── */}
@@ -124,14 +159,21 @@ export default function DetailModal({ item, onClose }) {
 
             {/* Actions */}
             <div className="d-flex gap-2">
-              <button
-                className="btn btn-dark flex-grow-1 rounded-3 py-3"
-                style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }}
-                onClick={() => showToast(`Message sent to ${item.owner.name.split(' ')[0]}!`, '💬')}
-              >
-                💬 Contact seller
-              </button>
-              <button className={`dm-btn-save${saved ? ' saved' : ''}`} onClick={() => toggleSave(item.id)}>
+              <a
+  href={`mailto:${item.owner.email}?subject=${encodeURIComponent(
+    `Interested in ${item.title}`
+  )}&body=${encodeURIComponent(
+    `Hi ${item.owner.name.split(' ')[0]}, I am interested in your listing for ${item.title} ($${item.price}). Is it still available?`
+  )}`}
+  className="btn btn-dark flex-grow-1 rounded-3 py-3 text-decoration-none text-center"
+  style={{
+    fontFamily: 'DM Sans, sans-serif',
+    fontSize: '14px',
+  }}
+>
+  💬 Contact Seller
+</a>
+              <button className={`dm-btn-save${saved ? ' saved' : ''}`} onClick={() => toggleFavorite(item.id)}>
                 {saved ? '♥' : '♡'}
               </button>
             </div>

@@ -101,6 +101,37 @@ body { font-family:'DM Sans',sans-serif!important; background:var(--sand)!import
 .hchip { padding:3px 10px; border-radius:100px; font-size:9px; background:var(--sand); color:var(--faint); border:1px solid var(--sand3); }
 .hchip.bus { background:var(--sage-bg); color:var(--sage); border-color:var(--sage-bd); font-weight:500; }
 
+/* Housing image carousel – cards auto-advance quietly, while the detail modal
+   exposes arrows and dots. Placeholder slides are styled like mock photos so
+   real housing images can replace them later without changing the UI structure. */
+.housing-carousel { background:var(--sand2); width:100%; }
+.housing-carousel-track { transition:transform .45s ease; will-change:transform; }
+.housing-carousel-slide { flex:0 0 auto; height:100%; }
+.housing-carousel-image { width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+.housing-placeholder-slide { padding:20px; isolation:isolate; }
+.housing-placeholder-glow { position:absolute; width:210px; height:210px; border-radius:50%; top:-60px; right:-30px; filter:blur(8px); z-index:0; }
+.housing-placeholder-grid { position:absolute; inset:auto 0 0 0; height:52%; background:linear-gradient(to right, rgba(255,255,255,.2) 1px, transparent 1px), linear-gradient(to top, rgba(255,255,255,.2) 1px, transparent 1px); background-size:26px 26px; opacity:.55; z-index:0; }
+.housing-placeholder-copy { max-width:min(72%, 440px); z-index:1; position:relative; }
+.housing-placeholder-kicker { font-size:10px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; margin-bottom:8px; }
+.housing-placeholder-headline { font-family:'Syne',sans-serif; font-size:clamp(22px,4vw,34px); font-weight:800; letter-spacing:-.8px; line-height:1.05; color:var(--ink); margin-bottom:8px; }
+.housing-placeholder-subline { font-size:12px; color:rgba(24,24,27,.72); line-height:1.55; max-width:34ch; }
+.housing-placeholder-emoji { position:absolute; right:20px; bottom:16px; font-size:clamp(2.6rem,7vw,4.8rem); line-height:1; filter:drop-shadow(0 12px 18px rgba(24,24,27,.14)); z-index:1; user-select:none; }
+.housing-carousel-control { position:absolute; top:50%; transform:translateY(-50%); width:42px; height:42px; border:none; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.88); color:var(--ink); box-shadow:0 10px 24px rgba(24,24,27,.14); z-index:3; transition:transform .15s ease, background .15s ease, box-shadow .15s ease; }
+.housing-carousel-control:hover { background:#fff; transform:translateY(-50%) scale(1.04); box-shadow:0 14px 28px rgba(24,24,27,.18); }
+.housing-carousel-control.prev { left:16px; }
+.housing-carousel-control.next { right:16px; }
+.housing-carousel-dots { position:absolute; left:50%; bottom:16px; transform:translateX(-50%); display:flex; align-items:center; gap:8px; z-index:3; }
+.housing-carousel-dot { width:9px; height:9px; border:none; border-radius:50%; background:rgba(255,255,255,.55); box-shadow:0 2px 10px rgba(24,24,27,.14); transition:width .18s ease, background .18s ease; }
+.housing-carousel-dot.active { width:24px; border-radius:999px; background:#fff; }
+.housing-carousel--detail { flex:0 0 auto; aspect-ratio:16 / 8; min-height:260px; max-height:420px; }
+.housing-carousel--detail .housing-placeholder-slide { padding:28px 32px; }
+.housing-carousel--detail .housing-placeholder-copy { max-width:min(34%, 300px); padding:12px 14px; border-radius:16px; background:rgba(255,255,255,.7); backdrop-filter:blur(12px); box-shadow:0 20px 40px rgba(24,24,27,.12); }
+.housing-carousel--detail .housing-placeholder-headline { font-size:clamp(16px, 1.9vw, 24px); margin-bottom:4px; }
+.housing-carousel--detail .housing-placeholder-subline { font-size:11px; max-width:22ch; }
+.housing-carousel--detail .housing-placeholder-emoji { right:28px; bottom:22px; font-size:clamp(2.4rem, 5vw, 4rem); opacity:.92; }
+.housing-carousel--detail .housing-carousel-control.prev { left:18px; }
+.housing-carousel--detail .housing-carousel-control.next { right:74px; }
+
 /* ── TABS ────────────────────────────────────────────────────────────────────
    .ph-tab-bar – scrollable horizontal strip at the bottom of page heroes.
    .ph-tab / .ptab – individual tab buttons (same style, two class names used
@@ -165,3 +196,21 @@ body { font-family:'DM Sans',sans-serif!important; background:var(--sand)!import
    Dark footer strip at the bottom of the Home page only.                       */
 footer { background:var(--ink); color:rgba(255,255,255,.4); text-align:center; padding:24px; font-size:12px; }
 footer strong { color:rgba(255,255,255,.7); }
+
+@media (max-width: 768px) {
+  .housing-placeholder-slide { padding:16px; }
+  .housing-placeholder-copy { max-width:78%; }
+  .housing-placeholder-headline { font-size:clamp(18px, 7vw, 26px); }
+  .housing-placeholder-subline { font-size:11px; max-width:28ch; }
+  .housing-placeholder-emoji { right:14px; bottom:12px; font-size:clamp(2.2rem, 12vw, 3.5rem); }
+  .housing-carousel--detail { aspect-ratio:4 / 3; min-height:220px; max-height:320px; }
+  .housing-carousel--detail .housing-placeholder-slide { padding:18px; }
+  .housing-carousel--detail .housing-placeholder-copy { max-width:calc(100% - 84px); padding:12px 14px; }
+  .housing-carousel--detail .housing-placeholder-headline { font-size:clamp(16px, 5vw, 22px); }
+  .housing-carousel--detail .housing-placeholder-emoji { right:12px; bottom:12px; font-size:clamp(2rem, 9vw, 3rem); }
+  .housing-carousel--detail .housing-carousel-control.next { right:56px; }
+  .housing-carousel-control { width:38px; height:38px; }
+  .housing-carousel-control.prev { left:10px; }
+  .housing-carousel-control.next { right:10px; }
+  .housing-carousel-dots { bottom:12px; }
+}

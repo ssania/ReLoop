@@ -7,24 +7,19 @@ const express  = require('express');
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const crypto   = require('crypto');       // built-in Node module, no install needed
-const nodemailer = require('nodemailer');
 const User     = require('../models/User');
 
 const router = express.Router();
 
 // ─── Nodemailer transporter ───────────────────────────────────────────────────
-// Uses a Gmail account set in .env to send verification emails.
-// Add these to your .env:
-//   EMAIL_USER=yourapp@gmail.com
-//   EMAIL_PASS=your_gmail_app_password   ← use an App Password, not your real password
-//   CLIENT_URL=http://localhost:5173     ← your frontend URL
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// const nodemailer = require('nodemailer');
+// const transporter = nodemailer.createTransport({
+//   service: 'gmail',
+//   auth: {
+//     user: process.env.EMAIL_USER,
+//     pass: process.env.EMAIL_PASS,
+//   },
+// });
 
 // ─── Helper: generate JWT ─────────────────────────────────────────────────────
 const generateToken = (user) => {
@@ -36,25 +31,15 @@ const generateToken = (user) => {
 };
 
 // ─── Helper: send verification email ─────────────────────────────────────────
-async function sendVerificationEmail(email, token) {
-  const link = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
-  await transporter.sendMail({
-    from:    `"ReLoop UMass" <${process.env.EMAIL_USER}>`,
-    to:      email,
-    subject: 'Verify your ReLoop UMass account',
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
-        <h2 style="color:#c96a2e">ReLoop UMass 🔁</h2>
-        <p>Hey there! Click the button below to verify your UMass email and activate your account.</p>
-        <a href="${link}"
-           style="display:inline-block;background:#18181b;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0">
-          Verify my email →
-        </a>
-        <p style="color:#888;font-size:12px">This link expires in 24 hours. If you didn't sign up for ReLoop, ignore this email.</p>
-      </div>
-    `,
-  });
-}
+// async function sendVerificationEmail(email, token) {
+//   const link = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+//   await transporter.sendMail({
+//     from:    `"ReLoop UMass" <${process.env.EMAIL_USER}>`,
+//     to:      email,
+//     subject: 'Verify your ReLoop UMass account',
+//     html: `...`,
+//   });
+// }
 
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
@@ -89,8 +74,7 @@ router.post('/register', async (req, res) => {
       verified:          true,               // must verify email before logging in
     });
 
-    // Send verification email to their @umass.edu inbox.
-    await sendVerificationEmail(newUser.email, verificationToken);
+    // await sendVerificationEmail(newUser.email, verificationToken);
 
     return res.status(201).json({
       message: 'Account created! Please check your @umass.edu inbox to verify your email before logging in.',

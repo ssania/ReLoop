@@ -5,77 +5,64 @@ const { ListingMongoose: Listing } = require('./models/Listing');
 const { HousingMongoose: HousingArea } = require('./models/Housing');
 const { ReviewMongoose: Review } = require('./models/Review');
 const HousingReview = require('./models/HousingReview');
+const { housing: housingData, initialListings } = require('./data/mockData');
 
 async function seed() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log('Connected to MongoDB');
 
-  // Clear old data
-  await User.deleteMany({});
-  await Listing.deleteMany({});
+  // ── Housing ──────────────────────────────────────────────────────────────────
   await HousingArea.deleteMany({});
-  await Review.deleteMany({});
   await HousingReview.deleteMany({});
+  console.log('Cleared existing housing data');
 
-  // Create sample users
-  const user1 = await User.create({
-    name:         'Alex Smith',
-    email:        'asmith@umass.edu',
-    passwordHash: 'hashed_password_here',
-    role:         'student',
-  });
+  for (const h of housingData) {
+    const { housingReviews, id, emoji, ...areaFields } = h;
+    const area = await HousingArea.create(areaFields);
 
-  const user2 = await User.create({
-    name:         'Sara Jones',
-    email:        'sjones@umass.edu',
-    passwordHash: 'hashed_password_here',
-    role:         'student',
-  });
+    if (housingReviews?.length) {
+      let adminUser = await User.findOne({ email: 'admin@reloop.com' });
+      if (!adminUser) {
+        adminUser = await User.create({
+          name:         'ReLoop Admin',
+          email:        'admin@reloop.com',
+          passwordHash: 'hashed_placeholder',
+          role:         'admin',
+        });
+      }
+      for (const r of housingReviews) {
+        await HousingReview.create({ reviewer: adminUser._id, area: area._id, stars: r.stars, comment: r.comment });
+      }
+    }
 
-  // Create sample listing
-  const listing1 = await Listing.create({
-    owner:       user1._id,
-    title:       'IKEA Desk - Great Condition',
-    description: 'Moving out, selling my desk. Barely used.',
-    category:    'Furniture',
-    price:       45,
-    condition:   'Like New',
-    tags:        ['desk', 'furniture', 'ikea'],
-  });
+    console.log(`Seeded housing: ${area.name}`);
+  }
 
-  // Link listing to owner's listings array
-  await User.findByIdAndUpdate(user1._id, { $push: { listings: listing1._id } });
+  // ── Listings ─────────────────────────────────────────────────────────────────
+  await Listing.deleteMany({});
+  await User.deleteMany({ role: 'student' });
+  console.log('Cleared existing listings and student users');
 
-  // Create sample housing area
-  const area1 = await HousingArea.create({
-    name:          'North Apartments',
-    type:          'On-campus',
-    description:   'On-campus housing north of the library.',
-    distance:      '0.2 – 0.5 mi from campus',
-    rentMin:       800,
-    rentMax:       1200,
-    amenities:     ['laundry', 'wifi', 'parking'],
-    busRoutes:     ['PVTA #31', 'PVTA #38'],
-  });
+  // Create 4 mock users + John Doe (default owner for new UI-created listings)
+  const [johnDoe, alice, bob, carol, dan] = await User.insertMany([
+    { name: 'John Doe',    email: 'john.doe@reloop.com',    passwordHash: 'hashed_placeholder', avgRating: 5.0, role: 'student' },
+    { name: 'Alice Chen',  email: 'alice.chen@reloop.com',  passwordHash: 'hashed_placeholder', avgRating: 4.9, role: 'student' },
+    { name: 'Bob Nguyen',  email: 'bob.nguyen@reloop.com',  passwordHash: 'hashed_placeholder', avgRating: 4.7, role: 'student' },
+    { name: 'Carol Smith', email: 'carol.smith@reloop.com', passwordHash: 'hashed_placeholder', avgRating: 4.8, role: 'student' },
+    { name: 'Dan Park',    email: 'dan.park@reloop.com',    passwordHash: 'hashed_placeholder', avgRating: 4.6, role: 'student' },
+  ]);
+  console.log('Created mock users: John Doe, Alice Chen, Bob Nguyen, Carol Smith, Dan Park');
 
-  // Create sample review (user2 reviews user1 after a transaction)
-  await Review.create({
-    reviewer:   user2._id,
-    targetUser: user1._id,
-    listingRef: listing1._id,
-    stars:      5,
-    comment:    'Great seller, item was exactly as described!',
-  });
+  // Distribute listings across the 4 mock users (2 each)
+  const ownerCycle = [alice, alice, bob, bob, carol, carol, dan, dan];
 
-  // Create sample housing review
-  await HousingReview.create({
-    reviewer: user1._id,
-    area:     area1._id,
-    stars:    4,
-    comment:  'Great location, close to campus and bus stops.',
-  });
+  for (let i = 0; i < initialListings.length; i++) {
+    const { id, emoji, ownedByUser, owner, createdAt, ...listingFields } = initialListings[i];
+    await Listing.create({ ...listingFields, owner: ownerCycle[i]._id });
+    console.log(`Seeded listing: ${initialListings[i].title}`);
+  }
 
-  console.log('Seed data inserted!');
+  console.log('Seed complete.');
   await mongoose.disconnect();
 }
 
