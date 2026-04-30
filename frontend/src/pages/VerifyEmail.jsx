@@ -4,27 +4,40 @@
 // This page just reads the token from the URL and calls GET /api/auth/verify/:token
 // The backend then redirects to /login?verified=true on success.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 
 export default function VerifyEmail() {
   const [searchParams]  = useSearchParams();
   const [status, setStatus] = useState('verifying'); // 'verifying' | 'error'
 
+  const calledRef = useRef(false);
+
   useEffect(() => {
+    if (calledRef.current) return;
+    calledRef.current = true;
+
     const token = searchParams.get('token');
     if (!token) {
       setStatus('error');
       return;
     }
-    // Hit the backend verify endpoint — it redirects to /login?verified=true on success.
-    // If it fails (bad token), we show an error here.
-    fetch(`http://localhost:5002/api/auth/verify/${token}`)
+    // Navigate the browser directly to the backend verify URL.
+    // The backend marks verified=true then redirects to /login?verified=true.
+    // Using window.location lets the browser follow the redirect natively.
+    fetch(`http://localhost:5002/api/auth/verify/${token}`, { redirect: 'manual' })
       .then(res => {
-        if (!res.ok) setStatus('error');
-        // On success the backend does a redirect, so the browser will navigate away.
+        console.log('Verify response status:', res.status, 'type:', res.type, 'redirected:', res.redirected);
+        // status 0 = opaqueredirect (backend sent a redirect) = success
+        // status 200 = followed redirect = success
+        // anything else = error
+        if (res.type === 'opaqueredirect' || res.ok || res.redirected) {
+          window.location.href = 'http://localhost:5173/login?verified=true';
+        } else {
+          setStatus('error');
+        }
       })
-      .catch(() => setStatus('error'));
+      .catch(err => { console.error('Verify fetch error:', err); setStatus('error'); });
   }, [searchParams]);
 
   return (

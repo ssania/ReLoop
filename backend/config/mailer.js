@@ -7,7 +7,7 @@ const { Resend } = require('resend');
 const mailConfigured = !!process.env.RESEND_API_KEY;
 const resend = mailConfigured ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM = 'ReLoop UMass <onboarding@resend.dev>';
+const FROM = 'ReLoop UMass <noreply@reloopumass.site>';
 
 // ── Email verification ────────────────────────────────────────────────────────
 async function sendVerificationEmail(email, token) {

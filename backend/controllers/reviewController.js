@@ -3,6 +3,7 @@
 const ReviewMongoose = require('../models/Review');
 const User = require('../models/User');
 const { ListingMongoose } = require('../models/Listing');
+const mongoose = require('mongoose');
 
 // Recomputes avgRating and totalReviews on the seller after any review change.
 async function recalcSellerRating(targetUserId) {
@@ -16,15 +17,11 @@ async function recalcSellerRating(targetUserId) {
 }
 
 // GET /api/reviews/given
-// Returns all reviews submitted by John Doe as a buyer (includes listingRef for keying).
+// Returns all reviews submitted by the logged-in user as a buyer (includes listingRef for keying).
 const getGivenReviews = async (req, res) => {
   try {
-    const User_ = require('../models/User');
-    const reviewer = await User_.findOne({ email: 'john.doe@reloop.com' });
-    if (!reviewer) return res.json([]);
-
     const reviews = await ReviewMongoose
-      .find({ reviewer: reviewer._id })
+      .find({ reviewer: new mongoose.Types.ObjectId(req.user.id) })
       .lean();
 
     // Serialize ObjectId fields to strings so frontend Map keying works correctly
@@ -65,7 +62,6 @@ const getReviews = async (req, res) => {
 
 // POST /api/reviews
 // Body: { listingId, stars, comment }
-// Hardcoded reviewer = John Doe until auth is implemented.
 const createReview = async (req, res) => {
   try {
     const { listingId, stars, comment } = req.body;
@@ -75,17 +71,12 @@ const createReview = async (req, res) => {
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
     if (listing.status !== 'Sold') return res.status(400).json({ message: 'Can only review a sold listing' });
 
-    // Hardcoded to John Doe until JWT auth is wired up
-    const User_ = require('../models/User');
-    const reviewer = await User_.findOne({ email: 'john.doe@reloop.com' });
-    if (!reviewer) return res.status(500).json({ message: 'Default user not found — run seed.js' });
-
-    if (listing.buyer?.toString() !== reviewer._id.toString()) {
+    if (listing.buyer?.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Only the confirmed buyer can review this listing' });
     }
 
     const review = await ReviewMongoose.create({
-      reviewer:   reviewer._id,
+      reviewer:   req.user.id,
       targetUser: listing.owner,
       listingRef: listing._id,
       stars,
@@ -150,4 +141,17 @@ const deleteReview = async (req, res) => {
   }
 };
 
-module.exports = { getReviews, getGivenReviews, createReview, updateReview, deleteReview };
+// GET /api/reviews/seller-stats/:id
+// Returns live avgRating and totalReviews for a seller directly from the User doc.
+const getSellerStats = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('avgRating totalReviews').lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ avgRating: user.avgRating, totalReviews: user.totalReviews });
+  } catch (err) {
+    console.error('Failed to fetch seller stats:', err);
+    res.status(500).json({ message: 'Failed to fetch seller stats' });
+  }
+};
+
+module.exports = { getReviews, getGivenReviews, getSellerStats, createReview, updateReview, deleteReview };

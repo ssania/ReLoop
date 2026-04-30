@@ -44,7 +44,11 @@ router.post('/register', async (req, res) => {
       verified:          false,
     });
 
-    await sendVerificationEmail(email.toLowerCase(), verificationToken);
+    try {
+      await sendVerificationEmail(email.toLowerCase(), verificationToken);
+    } catch (mailErr) {
+      console.error('Failed to send verification email:', mailErr);
+    }
 
     const mailConfigured = !!process.env.RESEND_API_KEY;
     const message = mailConfigured

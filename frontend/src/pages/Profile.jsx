@@ -55,7 +55,7 @@ const TABS = [['listings', 'My listings'], ['saved', 'Saved items'], ['pending',
 
 export default function Profile() {
   const { listings, favoriteIds, deleteListing, confirmPurchase, rejectPurchase, showToast } = useApp();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate  = useNavigate();
 
   useEffect(() => {
@@ -71,31 +71,35 @@ export default function Profile() {
   // reviewTarget: { listing, existing } — opens ReviewModal from Purchased tab.
   const [reviewTarget, setReviewTarget] = useState(null);
 
-  // myReviews: reviews John Doe received as a seller. Fetched when Reviews tab opens.
+  // myReviews: reviews the logged-in user received as a seller. Fetched when Reviews tab opens.
   const [myReviews, setMyReviews] = useState([]);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
+  const [avgRating, setAvgRating]       = useState(null);
+  const [totalReviews, setTotalReviews] = useState(0);
 
-  // myGivenReviews: reviews John Doe submitted as a buyer, keyed by listingId.
+  // givenReviews: reviews the logged-in user submitted as a buyer, keyed by listingId.
   // Populated once so Purchased tab can show Edit vs Give Review.
   const [givenReviews, setGivenReviews] = useState({}); // { listingId: reviewDoc }
 
   useEffect(() => {
     if (tab !== 'reviews' || reviewsLoaded || !user) return;
-    fetch(`${API}/reviews?sellerId=${user._id}`)
+    fetch(`${API}/reviews?sellerId=${user.id}`)
       .then(r => r.json())
       .then(data => { setMyReviews(data); setReviewsLoaded(true); })
       .catch(err => console.error('Failed to fetch seller reviews:', err));
-  }, [tab, reviewsLoaded, user]);
 
-  // Fetch reviews John Doe has given as a buyer when Purchased tab opens.
+    // Fetch fresh avgRating and totalReviews from the DB (not from JWT which is stale).
+    fetch(`${API}/reviews/seller-stats/${user.id}`)
+      .then(r => r.json())
+      .then(data => { setAvgRating(data.avgRating); setTotalReviews(data.totalReviews); })
+      .catch(() => {});
+  }, [tab, reviewsLoaded, user, token]);
+
+  // Fetch reviews the logged-in user has given as a buyer when Purchased tab opens.
   useEffect(() => {
     if (tab !== 'purchased') return;
-    // Collect the seller IDs from purchased listings, then fetch reviews per listing.
-    // Simpler: fetch all reviews where reviewer = John Doe by querying each listing.
-    // We do this by fetching GET /api/reviews?sellerId for each unique seller and
-    // cross-referencing, but that's expensive. Instead we store givenReviews by
-    // listingId — the backend returns listingRef on each review doc.
-    fetch(`${API}/reviews/given`)
+    // givenReviews keyed by listingId — the backend returns listingRef on each review doc.
+    fetch(`${API}/reviews/given`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => {
         const map = {};
@@ -111,19 +115,23 @@ export default function Profile() {
   // Avatar initials derived from the real user's name.
   const initials = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
-  // myListings: listings created by this user (flagged on create).
-  const myListings    = listings.filter(m => m.ownedByUser === true);
+  // myListings: listings created by this user, matched by owner ID.
+  const myListings    = listings.filter(m => m.owner?._id?.toString() === user?.id);
   const favoriteItems = listings.filter(m => favoriteIds.has(m.id));
 
-  const asBuyer       = listings.filter(m => m.status === 'pending-confirmation' && m.buyer?._id === user?._id);
-  const asSeller      = listings.filter(m => m.status === 'pending-confirmation' && m.owner?._id === user?._id);
-  const purchasedItems = listings.filter(m => m.status === 'Sold' && m.buyer?._id === user?._id);
+  const asBuyer       = listings.filter(m => m.status === 'pending-confirmation' && m.buyer?._id?.toString() === user?.id);
+  const asSeller      = listings.filter(m => m.status === 'pending-confirmation' && m.owner?._id?.toString() === user?.id);
+  const purchasedItems = listings.filter(m => m.status === 'Sold' && m.buyer?._id?.toString() === user?.id);
+
+  const sellerRating = totalReviews > 0
+    ? `${avgRating} ⭐`
+    : '— / 5';
 
   const statCards = [
-    [myListings.length, 'Active listings'],
-    [favoriteIds.size,  'Saved items'],
-    ['4.8 ⭐',          'Seller rating'],
-    ['Verified',        'Account status'],
+    [myListings.length,  'Active listings'],
+    [favoriteIds.size,   'Saved items'],
+    [sellerRating,       'Seller rating'],
+    ['Verified',         'Account status'],
   ];
 
   return (
@@ -174,7 +182,7 @@ export default function Profile() {
           {statCards.map(([n, l]) => (
             <div key={l} className="col">
               <div className="card border text-center p-3" style={{ borderRadius: '12px' }}>
-                <div style={{ fontFamily: 'Syne,sans-serif', fontSize: '24px', fontWeight: 800, letterSpacing: '-.8px' }}>{n}</div>
+                <div style={{ fontFamily: 'Syne,sans-serif', fontSize: 'clamp(14px,3vw,22px)', fontWeight: 800, letterSpacing: '-.5px', lineHeight: 1.2 }}>{n}</div>
                 <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>{l}</div>
               </div>
             </div>
@@ -371,7 +379,7 @@ export default function Profile() {
           )
         )}
 
-        {/* ── Reviews tab ── reviews John Doe received as a seller ──────── */}
+        {/* ── Reviews tab ── reviews received as a seller ──────────────── */}
         {tab === 'reviews' && (
           myReviews.length ? (
             <div className="d-flex flex-column gap-3">

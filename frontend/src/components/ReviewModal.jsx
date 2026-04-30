@@ -9,10 +9,12 @@
 //   onDeleted  – callback() called after successful delete (edit mode only)
 
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const API = 'http://localhost:5002/api';
 
 export default function ReviewModal({ listing, existing, onClose, onSaved, onDeleted }) {
+  const { token } = useAuth();
   const isEdit = !!existing;
   const [stars,   setStars]   = useState(existing?.stars ?? 0);
   const [hovered, setHovered] = useState(0);
@@ -35,7 +37,7 @@ export default function ReviewModal({ listing, existing, onClose, onSaved, onDel
 
       const res  = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -53,7 +55,7 @@ export default function ReviewModal({ listing, existing, onClose, onSaved, onDel
     if (!window.confirm('Delete your review? This cannot be undone.')) return;
     setDeleting(true);
     try {
-      await fetch(`${API}/reviews/${existing._id}`, { method: 'DELETE' });
+      await fetch(`${API}/reviews/${existing._id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       onDeleted();
       onClose();
     } catch {

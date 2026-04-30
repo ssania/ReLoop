@@ -6,13 +6,6 @@ const { sendBuyerNomination, sendSellerConfirmation } = require('../config/maile
 const { s3 } = require('../config/s3');
 const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
 
-// Placeholder until auth is implemented — resolves to the "John Doe" seed user.
-async function getDefaultOwner() {
-  const user = await User.findOne({ email: 'john.doe@reloop.com' });
-  if (!user) throw new Error('Default owner not found — run seed.js first');
-  return user._id;
-}
-
 // GET /api/listings
 const getListings = async (_req, res) => {
   try {
@@ -27,7 +20,7 @@ const getListings = async (_req, res) => {
 // POST /api/listings
 const createListing = async (req, res) => {
   try {
-    const ownerId = await getDefaultOwner();
+    const ownerId = req.user.id;
     const { owner, ...rest } = req.body;
 
     // ✅ Get S3 uploaded images

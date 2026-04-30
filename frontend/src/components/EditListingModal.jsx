@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
 const CATEGORIES = ['Furniture', 'Textbooks', 'Electronics', 'Clothing', 'Appliances', 'Sports', 'Other'];
@@ -18,6 +19,7 @@ const API = 'http://localhost:5002/api';
 
 export default function EditListingModal({ item, onClose }) {
   const { updateListing, showToast } = useApp();
+  const { token } = useAuth();
 
   const [title, setTitle]           = useState(item.title);
   const [category, setCategory]     = useState(item.category);
@@ -49,7 +51,7 @@ export default function EditListingModal({ item, onClose }) {
       try {
         const res = await fetch(`${API}/listings/${item.id}/nominate`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ buyerEmail: buyerEmail.trim() }),
         });
         const data = await res.json();
