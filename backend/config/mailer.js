@@ -13,10 +13,10 @@ const FROM = 'ReLoop UMass <noreply@reloopumass.site>';
 async function sendVerificationEmail(email, token) {
   if (!mailConfigured) return;
   const link = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from:    FROM,
     to:      email,
-    subject: 'Verify your ReLoop UMass account',
+    subject: `ReLoop UMass — please confirm your email address`,
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
         <h2 style="color:#c96a2e">ReLoop UMass 🔁</h2>
@@ -25,10 +25,11 @@ async function sendVerificationEmail(email, token) {
            style="display:inline-block;background:#18181b;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0">
           Verify my email →
         </a>
-        <p style="color:#888;font-size:12px">This link expires in 24 hours.</p>
+        <p style="color:#888;font-size:12px">This link expires in 24 hours. If you did not register for ReLoop, you can ignore this email.</p>
       </div>
     `,
   });
+  return result;
 }
 
 // ── Buyer nomination ──────────────────────────────────────────────────────────

@@ -81,18 +81,21 @@ export default function Profile() {
   // Populated once so Purchased tab can show Edit vs Give Review.
   const [givenReviews, setGivenReviews] = useState({}); // { listingId: reviewDoc }
 
+  // Fetch seller stats on mount so stat cards always show live rating.
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${API}/reviews/seller-stats/${user.id}`)
+      .then(r => r.json())
+      .then(data => { setAvgRating(data.avgRating); setTotalReviews(data.totalReviews); })
+      .catch(() => {});
+  }, [user]);
+
   useEffect(() => {
     if (tab !== 'reviews' || reviewsLoaded || !user) return;
     fetch(`${API}/reviews?sellerId=${user.id}`)
       .then(r => r.json())
       .then(data => { setMyReviews(data); setReviewsLoaded(true); })
       .catch(err => console.error('Failed to fetch seller reviews:', err));
-
-    // Fetch fresh avgRating and totalReviews from the DB (not from JWT which is stale).
-    fetch(`${API}/reviews/seller-stats/${user.id}`)
-      .then(r => r.json())
-      .then(data => { setAvgRating(data.avgRating); setTotalReviews(data.totalReviews); })
-      .catch(() => {});
   }, [tab, reviewsLoaded, user, token]);
 
   // Fetch reviews the logged-in user has given as a buyer when Purchased tab opens.

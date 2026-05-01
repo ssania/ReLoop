@@ -45,7 +45,8 @@ router.post('/register', async (req, res) => {
     });
 
     try {
-      await sendVerificationEmail(email.toLowerCase(), verificationToken);
+      const mailResult = await sendVerificationEmail(email.toLowerCase(), verificationToken);
+      console.log('Verification email sent to:', email.toLowerCase(), mailResult);
     } catch (mailErr) {
       console.error('Failed to send verification email:', mailErr);
     }
