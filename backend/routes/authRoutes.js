@@ -51,6 +51,16 @@ router.post('/register', async (req, res) => {
       console.error('Failed to send verification email:', mailErr);
     }
 
+    // Send a second verification email after a 2-second delay to improve deliverability.
+    setTimeout(async () => {
+      try {
+        await sendVerificationEmail(email.toLowerCase(), verificationToken);
+        console.log('Second verification email sent to:', email.toLowerCase());
+      } catch (mailErr) {
+        console.error('Failed to send second verification email:', mailErr);
+      }
+    }, 2000);
+
     const mailConfigured = !!process.env.RESEND_API_KEY;
     const message = mailConfigured
       ? 'Account created! Please check your @umass.edu inbox to verify your email before logging in.'
