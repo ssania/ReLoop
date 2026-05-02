@@ -111,24 +111,17 @@ export default function Housing() {
 
           {/* Conditional rendering: map view vs. card grid vs. empty state. */}
           {isMap ? (
-            // Map placeholder – decorative static map with pin elements.
-            // Full Google Maps embed is planned for the live version.
-            <div className="rounded-4 position-relative d-flex align-items-center justify-content-center overflow-hidden"
-              style={{ background: 'linear-gradient(135deg,#e8f0e8,#d0e0d0)', height: '400px', border: '1px solid var(--sage-bd)' }}>
-              {/* Four neighbourhood pins at hardcoded positions. */}
-              <div className="hdm-map-pin" style={{ top: '35%', left: '38%' }}></div>
-              <div className="hdm-map-pin umass" style={{ top: '50%', left: '55%' }}></div>
-              <div className="hdm-map-pin" style={{ top: '25%', left: '58%' }}></div>
-              <div className="hdm-map-pin" style={{ top: '65%', left: '30%' }}></div>
-              <div className="text-center p-3 rounded-3" style={{ background: 'rgba(255,255,255,.85)' }}>
-                <div className="fw-medium" style={{ fontSize: '13px', color: 'var(--sage)' }}>🗺️ Interactive map</div>
-                <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '3px' }}>Google Maps integration – click a pin to explore</div>
-              </div>
-              {/* Legend. */}
-              <div className="position-absolute bottom-0 start-0 m-3 p-2 rounded-2 bg-white" style={{ fontSize: '10px' }}>
-                <div className="d-flex align-items-center gap-2 mb-1"><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--terra)' }}></div>Neighborhood</div>
-                <div className="d-flex align-items-center gap-2"><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sage)' }}></div>UMass / Landmark</div>
-              </div>
+            <div className="rounded-4 overflow-hidden" style={{ border: '1px solid var(--sage-bd)', height: 'clamp(320px, 60vw, 560px)' }}>
+              <iframe
+                src="https://www.google.com/maps/d/u/2/embed?mid=1-7NpzrhOpkdd8txIGiWzG0sX9-DbT2Q&ehbc=2E312F"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="UMass Amherst neighborhoods map"
+              />
             </div>
           ) : list.length ? (
             // Card grid – responsive columns: 1 on mobile, 2 on sm, 3 on xl.
