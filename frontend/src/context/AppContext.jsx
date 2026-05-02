@@ -130,10 +130,40 @@ export function AppProvider({ children }) {
     }
   }, [showToast]);
 
+  // addHousingReview: POST /api/housing/:areaId/reviews and merge the response
+  // into local housing state so HousingDetailModal updates without a refetch.
+  // The backend returns { review, averageRating, reviewCount } and also keeps
+  // the canonical totals on the housing area itself.
+  const addHousingReview = useCallback(async (areaId, { reviewerName, stars, comment }) => {
+    try {
+      const res = await fetch(`${API}/housing/${areaId}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewer: { name: reviewerName }, stars, comment }),
+      });
+      if (!res.ok) {
+        const { message } = await res.json().catch(() => ({}));
+        throw new Error(message || `HTTP ${res.status}`);
+      }
+      const { review, averageRating, reviewCount } = await res.json();
+      setHousing(prev => prev.map(h => h.id === areaId
+        ? { ...h, housingReviews: [review, ...h.housingReviews], averageRating, reviewCount }
+        : h
+      ));
+      showToast('Review posted', '⭐');
+      return true;
+    } catch (err) {
+      console.error('Failed to post housing review:', err);
+      showToast('Could not post review', '⚠️');
+      return false;
+    }
+  }, [showToast]);
+
   return (
     <AppContext.Provider value={{
       listings, housing, loading,
-      addListing, updateListing, deleteListing, savedIds, toggleSave, showToast, toast,
+      addListing, updateListing, deleteListing, addHousingReview,
+      savedIds, toggleSave, showToast, toast,
     }}>
       {children}
     </AppContext.Provider>
