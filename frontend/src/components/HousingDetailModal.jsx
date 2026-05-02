@@ -10,19 +10,49 @@
 // Body-scroll lock and backdrop-click-to-close follow the same pattern as
 // DetailModal (see that file for the explanation).
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatDate } from '../data/constants';
 
+// Hardcoded current user until JWT auth is implemented; matches the
+// "John Doe" identity used on the Profile page.
+const CURRENT_USER_NAME = 'John Doe';
+
 export default function HousingDetailModal({ h, onClose }) {
-  // showToast is used for the "Contact area managers" button at the bottom.
-  const { showToast } = useApp();
+  // showToast powers the "Contact area managers" toast.
+  // addHousingReview posts to /api/housing/:areaId/reviews and updates context.
+  const { showToast, addHousingReview } = useApp();
+
+  // Review-form local state.
+  const [stars, setStars] = useState(5);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Lock body scroll while modal is open; restore on unmount.
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (submitting) return;
+    if (!comment.trim()) {
+      showToast('Add a short comment first', '✏️');
+      return;
+    }
+    setSubmitting(true);
+    const ok = await addHousingReview(h.id, {
+      reviewerName: CURRENT_USER_NAME,
+      stars,
+      comment: comment.trim(),
+    });
+    setSubmitting(false);
+    if (ok) {
+      setStars(5);
+      setComment('');
+    }
+  };
 
   return (
     // Backdrop – click outside the modal dialog to close.
@@ -139,6 +169,56 @@ export default function HousingDetailModal({ h, onClose }) {
                   </div>
                 ))}
               </div>
+
+              {/* Inline review form. Posts to /api/housing/:areaId/reviews via
+                  addHousingReview; the response merges into context so the new
+                  review appears at the top of the list above without a refetch. */}
+              <form onSubmit={handleSubmit} className="p-3 rounded-3 mt-2" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
+                <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>
+                  Leave a review as {CURRENT_USER_NAME}
+                </div>
+
+                {/* Star picker – click a star to set the rating 1–5. */}
+                <div className="d-flex align-items-center gap-1 mb-2" role="radiogroup" aria-label="Rating">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      role="radio"
+                      aria-checked={stars === n}
+                      aria-label={`${n} star${n === 1 ? '' : 's'}`}
+                      onClick={() => setStars(n)}
+                      className="btn p-0"
+                      style={{ fontSize: '18px', lineHeight: 1, opacity: n <= stars ? 1 : 0.3, background: 'transparent', border: 'none' }}
+                    >
+                      ⭐
+                    </button>
+                  ))}
+                  <span className="ms-2" style={{ fontSize: '11px', color: 'var(--muted)' }}>{stars}/5</span>
+                </div>
+
+                <textarea
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  placeholder="Share what it's like to live here…"
+                  rows={3}
+                  maxLength={500}
+                  className="form-control mb-2"
+                  style={{ fontSize: '12px', fontWeight: 300, resize: 'vertical' }}
+                />
+
+                <div className="d-flex align-items-center justify-content-between">
+                  <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{comment.length}/500</span>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="btn rounded-3 fw-medium text-white"
+                    style={{ background: 'var(--sage)', fontSize: '12px', padding: '6px 16px', opacity: submitting ? 0.7 : 1 }}
+                  >
+                    {submitting ? 'Posting…' : 'Post review'}
+                  </button>
+                </div>
+              </form>
             </Section>
 
             {/* CTA – fires a toast to simulate sending a contact request. */}
