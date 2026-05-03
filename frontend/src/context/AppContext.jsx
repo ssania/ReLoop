@@ -9,6 +9,7 @@
 // the Express backend (localhost:5002).
 
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const API = 'http://localhost:5002/api';
 
@@ -22,24 +23,39 @@ export function AppProvider({ children }) {
   const [toast, setToast] = useState({ msg: '', icon: '✓', visible: false });
   const toastTimer = useRef(null);
 
+  const { token } = useAuth();
+
+  // Helper to build auth headers for protected requests.
+  const authHeaders = useCallback(() => ({
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }), [token]);
+
+  // Refetch all data whenever the logged-in user changes (login/logout).
   useEffect(() => {
     async function fetchData() {
       try {
-        const [listRes, housingRes, favRes] = await Promise.all([
+        const [listRes, housingRes] = await Promise.all([
           fetch(`${API}/listings`),
           fetch(`${API}/housing`),
-          fetch(`${API}/favorites`),
         ]);
 
-        const [listData, housingData, favData] = await Promise.all([
+        const [listData, housingData] = await Promise.all([
           listRes.json(),
           housingRes.json(),
-          favRes.json(),
         ]);
 
         setListings(listData);
         setHousing(housingData);
-        setFavoriteIds(new Set(favData));
+
+        // Only fetch favorites if logged in.
+        if (token) {
+          const favRes  = await fetch(`${API}/favorites`, { headers: { Authorization: `Bearer ${token}` } });
+          const favData = await favRes.json();
+          setFavoriteIds(new Set(favData));
+        } else {
+          setFavoriteIds(new Set());
+        }
       } catch (err) {
         console.error('Failed to fetch data from backend:', err);
       } finally {
@@ -48,7 +64,7 @@ export function AppProvider({ children }) {
     }
 
     fetchData();
-  }, []);
+  }, [token]);
 
   const showToast = useCallback((msg, icon = '✓') => {
     setToast({ msg, icon, visible: true });
@@ -59,7 +75,10 @@ export function AppProvider({ children }) {
   const toggleFavorite = useCallback(async (id) => {
     const isFavorited = favoriteIds.has(id);
     try {
-      await fetch(`${API}/favorites/${id}`, { method: isFavorited ? 'DELETE' : 'POST' });
+      await fetch(`${API}/favorites/${id}`, {
+        method: isFavorited ? 'DELETE' : 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setFavoriteIds(prev => {
         const next = new Set(prev);
         if (isFavorited) { next.delete(id); } else { next.add(id); }
@@ -70,9 +89,8 @@ export function AppProvider({ children }) {
       console.error('Failed to toggle favorite:', err);
       showToast('Could not update favorites', '⚠️');
     }
-  }, [favoriteIds, showToast]);
+  }, [favoriteIds, showToast, token]);
 
-  // CreateListingModal handles the API call itself and passes the created listing here
   const addListing = useCallback((item) => {
     setListings(prev => [item, ...prev]);
   }, []);
@@ -81,7 +99,7 @@ export function AppProvider({ children }) {
     try {
       const res = await fetch(`${API}/listings/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify(changes),
       });
       const updated = await res.json();
@@ -90,22 +108,28 @@ export function AppProvider({ children }) {
       console.error('Failed to update listing:', err);
       showToast('Could not update listing', '⚠️');
     }
-  }, [showToast]);
+  }, [showToast, authHeaders]);
 
   const deleteListing = useCallback(async (id) => {
     try {
-      await fetch(`${API}/listings/${id}`, { method: 'DELETE' });
+      await fetch(`${API}/listings/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setListings(prev => prev.filter(l => l.id !== id));
       setFavoriteIds(prev => { const next = new Set(prev); next.delete(id); return next; });
     } catch (err) {
       console.error('Failed to delete listing:', err);
       showToast('Could not delete listing', '⚠️');
     }
-  }, [showToast]);
+  }, [showToast, token]);
 
   const confirmPurchase = useCallback(async (id) => {
     try {
-      const res = await fetch(`${API}/listings/${id}/confirm`, { method: 'PATCH' });
+      const res = await fetch(`${API}/listings/${id}/confirm`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       if (!res.ok) { showToast(data.message || 'Could not confirm purchase', '⚠️'); return false; }
       setListings(prev => prev.map(l => l.id === id ? { ...l, status: 'Sold' } : l));
@@ -116,11 +140,14 @@ export function AppProvider({ children }) {
       showToast('Could not confirm purchase', '⚠️');
       return false;
     }
-  }, [showToast]);
+  }, [showToast, token]);
 
   const rejectPurchase = useCallback(async (id) => {
     try {
-      const res = await fetch(`${API}/listings/${id}/reject`, { method: 'PATCH' });
+      const res = await fetch(`${API}/listings/${id}/reject`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       if (!res.ok) { showToast(data.message || 'Could not reject purchase', '⚠️'); return false; }
       setListings(prev => prev.map(l => l.id === id ? { ...l, status: 'Available', buyer: null } : l));
@@ -131,7 +158,7 @@ export function AppProvider({ children }) {
       showToast('Could not reject purchase', '⚠️');
       return false;
     }
-  }, [showToast]);
+  }, [showToast, token]);
 
   const addHousingReview = useCallback(async (areaId, { reviewerName, stars, comment }) => {
     try {

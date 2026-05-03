@@ -5,17 +5,23 @@ const {
   getListings,
   createListing,
   updateListing,
-  deleteListing
+  deleteListing,
+  nominateBuyer,
+  confirmPurchase,
+  rejectPurchase,
 } = require('../controllers/listingController');
 
 const { uploadListingImage } = require('../config/s3'); // ✅ important
+const requireAuth = require('../middleware/authMiddeware');
 
 router.get('/', getListings);
 
-// ✅ Add middleware here
-router.post('/', uploadListingImage.array('images', 5), createListing);
+router.post('/', requireAuth, uploadListingImage.array('images', 5), createListing);
 
-router.patch('/:id', updateListing);
-router.delete('/:id', deleteListing);
+router.patch('/:id',         requireAuth, updateListing);
+router.patch('/:id/nominate', requireAuth, nominateBuyer);
+router.patch('/:id/confirm',  requireAuth, confirmPurchase);
+router.patch('/:id/reject',   requireAuth, rejectPurchase);
+router.delete('/:id',         requireAuth, deleteListing);
 
 module.exports = router;

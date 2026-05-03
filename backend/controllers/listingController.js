@@ -2,15 +2,9 @@
 const ListingModel = require('../models/Listing');
 const { ListingMongoose } = ListingModel;
 const User = require('../models/User');
+const { sendBuyerNomination, sendSellerConfirmation } = require('../config/mailer');
 const { s3 } = require('../config/s3');
 const { DeleteObjectsCommand } = require('@aws-sdk/client-s3');
-
-// Placeholder until auth is implemented — resolves to the "John Doe" seed user.
-async function getDefaultOwner() {
-  const user = await User.findOne({ email: 'john.doe@reloop.com' });
-  if (!user) throw new Error('Default owner not found — run seed.js first');
-  return user._id;
-}
 
 // GET /api/listings
 const getListings = async (_req, res) => {
@@ -26,7 +20,7 @@ const getListings = async (_req, res) => {
 // POST /api/listings
 const createListing = async (req, res) => {
   try {
-    const ownerId = await getDefaultOwner();
+    const ownerId = req.user.id;
     const { owner, ...rest } = req.body;
 
     // ✅ Get S3 uploaded images
@@ -84,4 +78,98 @@ const deleteListing = async (req, res) => {
   }
 };
 
-module.exports = { getListings, createListing, updateListing, deleteListing };
+// PATCH /api/listings/:id/nominate
+// Seller picks a buyer by email → status becomes pending-confirmation, email sent to buyer
+const nominateBuyer = async (req, res) => {
+  try {
+    const { buyerEmail } = req.body;
+    if (!buyerEmail) return res.status(400).json({ message: 'buyerEmail is required' });
+
+    const buyer = await User.findOne({ email: buyerEmail });
+    if (!buyer) return res.status(404).json({ message: 'No ReLoop user found with that email' });
+
+    const listing = await ListingMongoose.findById(req.params.id).populate('owner', 'name email');
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    listing.buyer = buyer._id;
+    listing.status = 'pending-confirmation';
+    await listing.save();
+
+    await sendBuyerNomination({
+      buyerEmail:    buyer.email,
+      buyerName:     buyer.name,
+      sellerName:    listing.owner.name,
+      listingTitle:  listing.title,
+      listingPrice:  listing.price,
+    });
+
+    res.json({ message: 'Buyer nominated', listingId: listing._id });
+  } catch (err) {
+    console.error('Failed to nominate buyer:', err);
+    res.status(500).json({ message: 'Failed to nominate buyer' });
+  }
+};
+
+// PATCH /api/listings/:id/confirm
+// Buyer confirms → status becomes Sold, listing pushed into buyer.bought[]
+const confirmPurchase = async (req, res) => {
+  try {
+    const listing = await ListingMongoose.findById(req.params.id)
+      .populate('owner', 'name email')
+      .populate('buyer', 'name email');
+
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+    if (listing.status !== 'pending-confirmation') return res.status(400).json({ message: 'Listing is not pending confirmation' });
+
+    listing.status = 'Sold';
+    await listing.save();
+
+    await User.findByIdAndUpdate(listing.buyer._id, { $addToSet: { bought: listing._id } });
+
+    await sendSellerConfirmation({
+      sellerEmail:  listing.owner.email,
+      sellerName:   listing.owner.name,
+      buyerName:    listing.buyer.name,
+      listingTitle: listing.title,
+      confirmed:    true,
+    });
+
+    res.json({ message: 'Purchase confirmed', listingId: listing._id });
+  } catch (err) {
+    console.error('Failed to confirm purchase:', err);
+    res.status(500).json({ message: 'Failed to confirm purchase' });
+  }
+};
+
+// PATCH /api/listings/:id/reject
+// Buyer rejects → status reverts to Available, buyer cleared, seller notified
+const rejectPurchase = async (req, res) => {
+  try {
+    const listing = await ListingMongoose.findById(req.params.id)
+      .populate('owner', 'name email')
+      .populate('buyer', 'name email');
+
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+    if (listing.status !== 'pending-confirmation') return res.status(400).json({ message: 'Listing is not pending confirmation' });
+
+    const buyerName = listing.buyer.name;
+    listing.status = 'Available';
+    listing.buyer  = null;
+    await listing.save();
+
+    await sendSellerConfirmation({
+      sellerEmail:  listing.owner.email,
+      sellerName:   listing.owner.name,
+      buyerName,
+      listingTitle: listing.title,
+      confirmed:    false,
+    });
+
+    res.json({ message: 'Purchase rejected', listingId: listing._id });
+  } catch (err) {
+    console.error('Failed to reject purchase:', err);
+    res.status(500).json({ message: 'Failed to reject purchase' });
+  }
+};
+
+module.exports = { getListings, createListing, updateListing, deleteListing, nominateBuyer, confirmPurchase, rejectPurchase };

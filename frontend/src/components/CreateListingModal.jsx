@@ -19,6 +19,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { EMOJI } from '../data/constants';
 
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
@@ -27,6 +28,7 @@ const CATEGORIES = ['Furniture', 'Textbooks', 'Electronics', 'Clothing', 'Applia
 
 export default function CreateListingModal({ onClose, redirectTo }) {
   const { addListing, showToast } = useApp();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [images, setImages] = useState([]);
 
@@ -64,6 +66,7 @@ export default function CreateListingModal({ onClose, redirectTo }) {
 
     const res = await fetch('http://localhost:5002/api/listings', {
       method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
       body: formData
     });
 
@@ -74,7 +77,6 @@ export default function CreateListingModal({ onClose, redirectTo }) {
     addListing({
       ...newListing,
       emoji: EMOJI[category] || '📦',
-      ownedByUser: true,
     });
 
     showToast('Listing posted!', '🎉');
