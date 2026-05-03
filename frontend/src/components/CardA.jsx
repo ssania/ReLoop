@@ -44,20 +44,21 @@ export default function CardA({ item, onClick }) {
       <div className="position-relative d-flex align-items-center justify-content-center overflow-hidden"
         style={{ height: '180px', background: bg }}>
 
-        <span className={`card-status position-absolute top-0 start-0 m-2 ${statusClass(item.status)}`}>
+        <span className={`card-status position-absolute top-0 start-0 m-2 ${statusClass(item.status)}`} style={{ zIndex: 1 }}>
           <div className="card-status-dot"></div>
           <span className="card-status-label">{item.status}</span>
         </span>
 
         <button
           className={`card-save position-absolute top-0 end-0 m-2 ${saved ? 'saved' : ''}`}
+          style={{ zIndex: 1 }}
           onClick={e => { e.stopPropagation(); toggleFavorite(item.id); }}
         >
           {saved ? '♥' : '♡'}
         </button>
 
         {item.imageUrls?.length > 0
-          ? <img src={item.imageUrls[0].url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
+          ? <img src={item.imageUrls[0].url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, zIndex: 0 }} />
           : <div className="card-emoji">{item.emoji}</div>
         }
       </div>

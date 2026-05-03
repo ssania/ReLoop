@@ -41,8 +41,8 @@ const HousingMongoose = mongoose.model('HousingArea', housingAreaSchema);
 const HousingModel = {
   async getAll() {
     const areas = await HousingMongoose.find({}).lean();
-    const HousingReview = require('./HousingReview');
-    const reviews = await HousingReview.find({})
+    const { HousingReviewMongoose } = require('./HousingReview');
+    const reviews = await HousingReviewMongoose.find({})
       .populate('reviewer', 'name')
       .lean();
 
@@ -52,10 +52,12 @@ const HousingModel = {
       const key = r.area.toString();
       if (!reviewsByArea[key]) reviewsByArea[key] = [];
       reviewsByArea[key].push({
-        reviewer:  { name: r.reviewer?.name ?? 'Anonymous' },
-        stars:     r.stars,
-        comment:   r.comment,
-        createdAt: r.createdAt,
+        id:         r._id.toString(),
+        reviewerId: r.reviewer?._id?.toString(),
+        reviewer:   { name: r.reviewer?.name ?? 'Anonymous' },
+        stars:      r.stars,
+        comment:    r.comment,
+        createdAt:  r.createdAt,
       });
     }
 

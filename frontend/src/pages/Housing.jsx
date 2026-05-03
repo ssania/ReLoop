@@ -28,8 +28,11 @@ export default function Housing() {
   const [rentFilter, setRentFilter] = useState('');
   const [busFilter, setBusFilter] = useState('');
 
-  // selectedH: null when no modal is open; set to a housing object to open HousingDetailModal.
-  const [selectedH, setSelectedH] = useState(null);
+  // selectedH: id of the housing area whose modal is open (null = closed).
+  // We store the id rather than the object so the modal always reads the
+  // latest version from context (e.g. after a review is posted).
+  const [selectedId, setSelectedId] = useState(null);
+  const selectedH = selectedId != null ? housing.find(h => h.id === selectedId) ?? null : null;
 
   // isMap: true when the "Map view" tab is active.
   // In map view the grid is replaced by the placeholder map; filters still apply
@@ -129,7 +132,7 @@ export default function Housing() {
               {list.map(h => (
                 <div key={h.id} className="col">
                   {/* Clicking a card sets selectedH → opens HousingDetailModal. */}
-                  <HousingCard h={h} onClick={setSelectedH} />
+                  <HousingCard h={h} onClick={h => setSelectedId(h.id)} />
                 </div>
               ))}
             </div>
@@ -145,7 +148,7 @@ export default function Housing() {
       </div>
 
       {/* HousingDetailModal mounts only when selectedH is not null. */}
-      {selectedH && <HousingDetailModal h={selectedH} onClose={() => setSelectedH(null)} />}
+      {selectedH && <HousingDetailModal h={selectedH} onClose={() => setSelectedId(null)} />}
     </>
   );
 }

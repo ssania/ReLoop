@@ -58,7 +58,9 @@ export default function HousingCard({ h, onClick }) {
 
         {/* Footer row: star rating + review count. */}
         <div className="d-flex align-items-center pt-2 border-top" style={{ borderColor: 'var(--sand2)!important' }}>
-          <span style={{ fontSize: '11px', color: 'var(--faint)' }}>⭐ {h.averageRating.toFixed(1)} ({h.reviewCount} reviews)</span>
+          <span style={{ fontSize: '11px', color: 'var(--faint)' }}>
+            {h.reviewCount > 0 ? `⭐ ${h.averageRating.toFixed(1)} (${h.reviewCount} review${h.reviewCount === 1 ? '' : 's'})` : 'No reviews yet'}
+          </span>
         </div>
       </div>
     </div>
