@@ -7,7 +7,7 @@
 //   token      – JWT string or null
 //   loading    – true while checking localStorage on first render
 //   login()    – POST /api/auth/login → stores token + user
-//   register() – POST /api/auth/register → stores token + user
+//   register() – POST /api/auth/register → returns server message (no auto-login, email verification required)
 //   logout()   – clears token + user
 
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -52,7 +52,9 @@ export function AuthProvider({ children }) {
     persist(data);
   }
 
-  // register: throws on error.
+  // register: creates the account but does NOT log the user in.
+  // They must verify their @umass.edu email before they can login.
+  // Returns the server message so the UI can show it.
   async function register(name, email, password) {
     const res  = await fetch(`${API}/register`, {
       method: 'POST',
@@ -61,7 +63,7 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Registration failed');
-    persist(data);
+    return data.message;
   }
 
   // logout: wipe everything.

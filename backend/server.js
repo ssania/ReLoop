@@ -33,7 +33,7 @@ app.use((req, res, next) => {
 });
 
 // ── Routes ─────────────────────────────────────────────────────────────────────
-app.use('/api/auth',     require('./routes/auth'));
+app.use('/api/auth',     require('./routes/authRoutes'));
 app.use('/api/listings', require('./routes/listingRoutes'));
 app.use('/api/housing',  require('./routes/housingRoutes'));
 app.use('/api/reviews',  require('./routes/reviewRoutes'));

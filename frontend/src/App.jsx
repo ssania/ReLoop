@@ -11,6 +11,7 @@ import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Toast from './components/Toast';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Housing from './pages/Housing';
 import Marketplace from './pages/Marketplace';
@@ -28,8 +29,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/housing" element={<Housing />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />

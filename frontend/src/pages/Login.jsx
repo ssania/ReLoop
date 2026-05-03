@@ -3,7 +3,7 @@
 // Shows a success banner when redirected from email verification (?verified=true)
 // Shows a clear message if the user tries to login before verifying their email.
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,10 +12,20 @@ export default function Login() {
   const navigate   = useNavigate();
   const location   = useLocation();
 
-  const from = location.state?.from?.pathname || '/profile';
+  const from = location.state?.from || '/profile';
 
-  // Show "Email verified!" banner if redirected from the verify link.
-  const justVerified = new URLSearchParams(location.search).get('verified') === 'true';
+  // Show "Email verified!" banner only on the first render after the backend redirect.
+  // We immediately clear the param from the URL so typing ?verified=true manually doesn't trigger it.
+  const [justVerified, setJustVerified] = useState(
+    () => new URLSearchParams(location.search).get('verified') === 'true'
+  );
+
+  useEffect(() => {
+    if (justVerified) {
+      // Strip the query param from the URL without causing a re-render loop.
+      navigate('/login', { replace: true });
+    }
+  }, []);
 
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');

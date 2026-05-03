@@ -1,153 +1,12 @@
 // ── Backend mock data ──────────────────────────────────────────────────────────
-// Single source of truth for seed data while MongoDB is not yet connected.
-// All field names and shapes exactly match the Mongoose schemas in database/models/
-// so that replacing this file with real DB queries requires zero frontend changes,
-// except for the imageUrls / floorPlanUrls fields (emojis are used as placeholders
-// in the frontend until real S3 images are uploaded).
-//
-// Key conventions:
-//   owner      – populated User shape { name, avgRating, email } (mirrors Mongoose populate)
-//   createdAt  – ISO 8601 string (mirrors Mongoose timestamps)
-//   imageUrls  – empty array until S3 upload is wired up
-
-// ── Listings ──────────────────────────────────────────────────────────────────
-// Mirrors: database/models/Listing.js
-// owner is the populated User object: { name, avgRating, email }
-// Frontend reads owner.name for the seller display, owner.avgRating for rating,
-// and owner.email for the Contact Seller mailto link.
-
-// ── Backend mock data ──────────────────────────────────────────────────────────
-
-const initialListings = [
-  {
-    id: 1,
-    owner:       { name: 'Maria Garcia', avgRating: 4.9, email: 'mgarcia@umass.edu' },
-    title:       'IKEA KALLAX Shelf 4×4 – White',
-    description: 'Perfect for dorm or apartment. Minor scratches on back panel only. Easy to disassemble for transport. Selling because graduating.',
-    category:    'Furniture',
-    price:       65,
-    condition:   'Good',
-    status:      'Available',
-    imageUrls:   [],
-    tags:        ['White', 'IKEA', 'Storage'],
-    createdAt:   '2025-03-10T10:00:00.000Z',
-    emoji:       '🛋️',
-    ownedByUser: false,
-  },
-  {
-    id: 2,
-    owner:       { name: 'Dev Patel', avgRating: 5.0, email: 'dpatel@umass.edu' },
-    title:       'MacBook Air M1 – 256GB Space Gray',
-    description: '2021 M1 MacBook Air. Barely used – mostly stayed in bag. 256GB SSD, 8GB RAM. Original charger and box included. Battery health 97%.',
-    category:    'Electronics',
-    price:       750,
-    condition:   'Like New',
-    status:      'Available',
-    imageUrls:   [],
-    tags:        ['Apple', 'Laptop', 'M1'],
-    createdAt:   '2025-03-05T14:30:00.000Z',
-    emoji:       '💻',
-    ownedByUser: false,
-  },
-  {
-    id: 3,
-    owner:       { name: 'Sam Lee', avgRating: 4.7, email: 'slee@umass.edu' },
-    title:       'McMurry Organic Chemistry 12th Ed.',
-    description: 'Highlighting in chapters 1–8 only. No torn pages. Perfect for CHEM 261. Selling because course is complete.',
-    category:    'Textbooks',
-    price:       45,
-    condition:   'Good',
-    status:      'Available',
-    imageUrls:   [],
-    tags:        ['CHEM 261', 'McMurry'],
-    createdAt:   '2025-02-18T09:15:00.000Z',
-    emoji:       '📚',
-    ownedByUser: false,
-  },
-  {
-    id: 4,
-    owner:       { name: 'Jordan Torres', avgRating: 4.6, email: 'jtorres@umass.edu' },
-    title:       'Mini Fridge 3.2 cu ft – Black',
-    description: 'Works perfectly, just cleaned. Great for dorm rooms. Must pick up from North Apartments. No delivery available.',
-    category:    'Appliances',
-    price:       80,
-    condition:   'Good',
-    status:      'In-talk',
-    imageUrls:   [],
-    tags:        ['Dorm', 'Compact'],
-    createdAt:   '2025-02-10T16:00:00.000Z',
-    emoji:       '🍳',
-    ownedByUser: false,
-  },
-  {
-    id: 5,
-    owner:       { name: 'Priya Kumar', avgRating: 4.8, email: 'pkumar@umass.edu' },
-    title:       'LED Desk Lamp + 4-Port USB Hub',
-    description: 'Adjustable color temperature, 4-port USB hub base. Used for one semester. Original box included.',
-    category:    'Electronics',
-    price:       20,
-    condition:   'Like New',
-    status:      'Available',
-    imageUrls:   [],
-    tags:        ['LED', 'USB', 'Study'],
-    createdAt:   '2025-01-22T11:45:00.000Z',
-    emoji:       '💻',
-    ownedByUser: false,
-  },
-  {
-    id: 6,
-    owner:       { name: 'Chris Morgan', avgRating: 4.9, email: 'cmorgan@umass.edu' },
-    title:       'Trek FX3 Hybrid Bike – Small',
-    description: '2020 Trek FX3. Serviced and tuned last month. Great for campus commuting. Lights included.',
-    category:    'Sports',
-    price:       320,
-    condition:   'Good',
-    status:      'Available',
-    imageUrls:   [],
-    tags:        ['Trek', 'Bike', 'Campus'],
-    createdAt:   '2025-01-15T08:30:00.000Z',
-    emoji:       '🚴',
-    ownedByUser: false,
-  },
-  {
-    id: 7,
-    owner:       { name: 'Lena Hayes', avgRating: 4.5, email: 'lhayes@umass.edu' },
-    title:       'Queen Bed Frame + Upholstered Headboard',
-    description: 'Solid wood queen frame with fabric headboard. Minor scuffs on the frame. No mattress included.',
-    category:    'Furniture',
-    price:       120,
-    condition:   'Good',
-    status:      'Available',
-    imageUrls:   [],
-    tags:        ['Queen', 'Bedroom'],
-    createdAt:   '2024-12-20T13:00:00.000Z',
-    emoji:       '🛋️',
-    ownedByUser: false,
-  },
-  {
-    id: 8,
-    owner:       { name: 'Tom Rivera', avgRating: 4.4, email: 'trivera@umass.edu' },
-    title:       'Stewart Calculus Early Trans. 8th Ed.',
-    description: 'Lots of margin notes – great for study. Cover has wear. All pages intact.',
-    category:    'Textbooks',
-    price:       30,
-    condition:   'Fair',
-    status:      'Sold',
-    imageUrls:   [],
-    tags:        ['MATH', 'Calculus'],
-    createdAt:   '2024-12-05T10:00:00.000Z',
-    emoji:       '📚',
-    ownedByUser: false,
-  },
-];
-
-// ── Housing areas ──────────────────────────────────────────────────────────────
+// Housing seed data for the neighbourhood guide.
+// Listings and users are created via the app — no mock data needed.
 
 const housing = [
   {
     id: 101,
     emoji:         '🏢',
-    name:          'ReNew Amherst',
+    name:          'Meadow View',
     type:          'Apartments',
     description:   'A quiet, pet-friendly garden-style community with a mixed student and young-professional crowd.\n\n🏠 The Community\nSet on beautifully landscaped grounds with walking paths and a calm, neighbourly vibe. Draws a mix of UMass, Amherst College, and Hampshire College students alongside families and professionals. Dogs and cats welcome with standard pet terms.\n\n💡 What\'s Included\nIn-unit full kitchen appliances, assigned parking, and on-site laundry. Rent typically excludes heat, electricity, and internet — budget for utilities separately.\n\n🚌 Getting Around\n1.2 mi from UMass; PVTA Route 31 stops nearby. Downtown Amherst is a short drive or one bus ride. Grocery runs usually need a car or bus trip.\n\n✅ Good To Know\nResponsive on-site maintenance and clean grounds are the standout wins. The main tradeoff is the walk to groceries — plan for PVTA or a vehicle.',
     distance:      1.2,
@@ -542,14 +401,4 @@ const housing = [
   },
 ];
 
-const myReviews = [
-  {
-    reviewer:   { name: 'Maria Garcia' },
-    targetUser: { name: 'John Doe' },
-    stars:      5,
-    comment:    'Super easy transaction.',
-    createdAt:  '2025-03-12T00:00:00.000Z',
-  },
-];
-
-module.exports = { initialListings, housing, myReviews };
+module.exports = { housing };
