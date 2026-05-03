@@ -21,6 +21,8 @@ export default function HousingDetailModal({ h, onClose }) {
   const { showToast, addHousingReview, editHousingReview, deleteHousingReview } = useApp();
   const { user } = useAuth();
 
+  const userReview = user ? h.housingReviews.find(r => r.reviewerId === user.id) ?? null : null;
+
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -252,8 +254,14 @@ export default function HousingDetailModal({ h, onClose }) {
                 })}
               </div>
 
-              {/* Show review form only to logged-in users. */}
-              {user ? (
+              {/* Review form — logged out: prompt to log in.
+                  Logged in + already reviewed: nothing (edit/delete on their card above).
+                  Logged in + no review yet: show the form. */}
+              {!user ? (
+                <div className="p-3 rounded-3 mt-2 text-center" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)', fontSize: '12px', color: 'var(--muted)' }}>
+                  <a href="/login" style={{ color: 'var(--sage)', textDecoration: 'none', fontWeight: 500 }}>Log in</a> to leave a review.
+                </div>
+              ) : !userReview ? (
                 <form onSubmit={handleSubmit} className="p-3 rounded-3 mt-2" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                   <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>
                     Leave a review as {user.name}
@@ -275,11 +283,7 @@ export default function HousingDetailModal({ h, onClose }) {
                     </button>
                   </div>
                 </form>
-              ) : (
-                <div className="p-3 rounded-3 mt-2 text-center" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)', fontSize: '12px', color: 'var(--muted)' }}>
-                  <a href="/login" style={{ color: 'var(--sage)', textDecoration: 'none', fontWeight: 500 }}>Log in</a> to leave a review.
-                </div>
-              )}
+              ) : null}
             </Section>
 
             {/* Contact – only renders rows for populated fields; the whole section is skipped if all are empty. */}

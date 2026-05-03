@@ -42,6 +42,9 @@ const createHousingReview = async (req, res) => {
   }
 
   try {
+    const existing = await HousingReviewMongoose.findOne({ area: req.params.areaId, reviewer: req.user.id });
+    if (existing) return res.status(409).json({ message: 'You have already reviewed this area' });
+
     const doc = await HousingReviewMongoose.create({
       reviewer: req.user.id,
       area:     req.params.areaId,
