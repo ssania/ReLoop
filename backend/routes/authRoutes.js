@@ -44,11 +44,23 @@ router.post('/register', async (req, res) => {
       verified:          false,
     });
 
+    if (!process.env.RESEND_API_KEY) {
+      return res.status(201).json({ message: 'Account created! (Email verification skipped — mail not configured.)' });
+    }
+
     try {
       const mailResult = await sendVerificationEmail(email.toLowerCase(), verificationToken);
+      if (mailResult?.error) {
+        // Resend rejected the send — most likely the address doesn't exist.
+        await User.deleteOne({ email: email.toLowerCase() });
+        console.error('Verification email failed:', mailResult.error);
+        return res.status(400).json({ message: 'Could not send a verification email to this address. Please double-check your email and try again.' });
+      }
       console.log('Verification email sent to:', email.toLowerCase(), mailResult);
     } catch (mailErr) {
+      await User.deleteOne({ email: email.toLowerCase() });
       console.error('Failed to send verification email:', mailErr);
+      return res.status(400).json({ message: 'Could not send a verification email to this address. Please double-check your email and try again.' });
     }
 
     // Send a second verification email after a 2-second delay to improve deliverability.
@@ -61,12 +73,7 @@ router.post('/register', async (req, res) => {
       }
     }, 2000);
 
-    const mailConfigured = !!process.env.RESEND_API_KEY;
-    const message = mailConfigured
-      ? 'Account created! Please check your @umass.edu inbox to verify your email before logging in.'
-      : 'Account created! (Email verification skipped — mail not configured.)';
-
-    return res.status(201).json({ message });
+    return res.status(201).json({ message: 'Account created! Please check your @umass.edu inbox to verify your email before logging in.' });
   } catch (err) {
     console.error('Register error:', err);
     return res.status(500).json({ message: 'Server error during registration.' });

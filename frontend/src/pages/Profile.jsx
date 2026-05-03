@@ -13,6 +13,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import CardA from '../components/CardA';
 import DetailModal from '../components/DetailModal';
+import PurchaseDetailModal from '../components/PurchaseDetailModal';
 import EditListingModal from '../components/EditListingModal';
 import ReviewModal from '../components/ReviewModal';
 import { formatDate } from '../data/constants';
@@ -63,7 +64,9 @@ export default function Profile() {
   }, [user, navigate]);
 
   const [tab, setTab] = useState('listings');
+  const [listingsSubTab, setListingsSubTab] = useState('active'); // 'active' | 'sold'
   const [selectedItem, setSelectedItem] = useState(null);
+  const [purchaseModal, setPurchaseModal] = useState(null); // { item, mode, existing? }
   const [editItem, setEditItem]         = useState(null);
   const [deleteItem, setDeleteItem]     = useState(null);
   const [createOpen, setCreateOpen]     = useState(false);
@@ -119,7 +122,9 @@ export default function Profile() {
   const initials = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   // myListings: listings created by this user, matched by owner ID.
-  const myListings    = listings.filter(m => m.owner?._id?.toString() === user?.id);
+  const myListings       = listings.filter(m => m.owner?._id?.toString() === user?.id);
+  const myActiveListings = myListings.filter(m => m.status === 'Available' || m.status === 'In-talk');
+  const mySoldListings   = myListings.filter(m => m.status === 'Sold');
   const favoriteItems = listings.filter(m => favoriteIds.has(m.id));
 
   const asBuyer       = listings.filter(m => m.status === 'pending-confirmation' && m.buyer?._id?.toString() === user?.id);
@@ -131,7 +136,7 @@ export default function Profile() {
     : '— / 5';
 
   const statCards = [
-    [myListings.length,  'Active listings'],
+    [myActiveListings.length, 'Active listings'],
     [favoriteIds.size,   'Saved items'],
     [sellerRating,       'Seller rating'],
     ['Verified',         'Account status'],
@@ -194,41 +199,87 @@ export default function Profile() {
 
         {/* ── My listings tab ───────────────────────────────────────────── */}
         {tab === 'listings' && (
-          myListings.length ? (
-            <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
-              {myListings.map(item => (
-                <div key={item.id} className="col">
-                  <div className="position-relative h-100">
-                    <CardA item={item} onClick={setSelectedItem} />
-                    <div className="position-absolute d-flex gap-2" style={{ bottom: '12px', right: '12px', zIndex: 2 }}>
-                      <button
-                        className="btn btn-sm btn-dark rounded-3"
-                        style={{ fontSize: '11px', padding: '5px 12px' }}
-                        onClick={e => { e.stopPropagation(); setEditItem(item); }}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className="btn btn-sm btn-danger rounded-3"
-                        style={{ fontSize: '11px', padding: '5px 12px' }}
-                        onClick={e => { e.stopPropagation(); setDeleteItem(item); }}
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
+          <>
+            {/* Sub-tab toggle */}
+            <div className="d-flex gap-2 mb-4">
+              {[['active', `Active (${myActiveListings.length})`], ['sold', `Sold (${mySoldListings.length})`]].map(([key, label]) => (
+                <button
+                  key={key}
+                  className="btn btn-sm rounded-pill"
+                  style={{
+                    fontSize: '12px', padding: '5px 16px',
+                    background: listingsSubTab === key ? '#18181b' : 'var(--sand)',
+                    color: listingsSubTab === key ? '#fff' : 'var(--faint)',
+                    border: listingsSubTab === key ? 'none' : '1px solid var(--sand3)',
+                    fontWeight: listingsSubTab === key ? 600 : 400,
+                  }}
+                  onClick={() => setListingsSubTab(key)}
+                >
+                  {label}
+                </button>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-5">
-              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📦</div>
-              <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '16px' }}>No listings yet</div>
-              <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)' }}>
-                Hit <strong>"Create listing"</strong> above to post your first item.
-              </p>
-            </div>
-          )
+
+            {/* Active listings */}
+            {listingsSubTab === 'active' && (
+              myActiveListings.length ? (
+                <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+                  {myActiveListings.map(item => (
+                    <div key={item.id} className="col">
+                      <div className="position-relative h-100">
+                        <CardA item={item} onClick={setSelectedItem} />
+                        <div className="position-absolute d-flex gap-2" style={{ bottom: '12px', right: '12px', zIndex: 2 }}>
+                          <button
+                            className="btn btn-sm btn-dark rounded-pill"
+                            style={{ fontSize: '11px', padding: '4px 12px' }}
+                            onClick={e => { e.stopPropagation(); setEditItem(item); }}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            className="btn btn-sm rounded-pill"
+                            style={{ fontSize: '11px', padding: '4px 12px', background: '#fee2e2', color: '#b91c1c', border: 'none' }}
+                            onClick={e => { e.stopPropagation(); setDeleteItem(item); }}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-5">
+                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📦</div>
+                  <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '16px' }}>No active listings</div>
+                  <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)' }}>
+                    Hit <strong>"Create listing"</strong> above to post your first item.
+                  </p>
+                </div>
+              )
+            )}
+
+            {/* Sold listings */}
+            {listingsSubTab === 'sold' && (
+              mySoldListings.length ? (
+                <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+                  {mySoldListings.map(item => (
+                    <div key={item.id} className="col">
+                      <CardA item={item} onClick={setSelectedItem} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-5">
+                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🏷️</div>
+                  <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '16px' }}>No sold listings yet</div>
+                  <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--muted)' }}>
+                    Items you've sold will appear here once buyers confirm.
+                  </p>
+                </div>
+              )
+            )}
+          </>
         )}
 
         {/* ── Saved items tab ───────────────────────────────────────────── */}
@@ -261,29 +312,11 @@ export default function Profile() {
               {asBuyer.length ? (
                 <div className="d-flex flex-column gap-3">
                   {asBuyer.map(item => (
-                    <div key={item.id} className="card border p-4 rounded-4">
-                      <div className="fw-bold text-truncate" style={{ fontFamily: 'Syne,sans-serif', fontSize: '14px' }}>{item.title}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
-                        ${item.price} · {item.condition} · Seller: {item.owner?.name}
-                      </div>
-                      <div className="mt-1 mb-3" style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                        ⏳ {item.owner?.name} nominated you as the buyer.
-                      </div>
-                      <div className="d-flex gap-2">
-                        <button
-                          className="btn btn-dark btn-sm rounded-3 flex-grow-1"
-                          style={{ fontSize: '12px', padding: '6px 12px' }}
-                          onClick={() => confirmPurchase(item.id)}
-                        >
-                          ✅ Yes, I bought this
-                        </button>
-                        <button
-                          className="btn btn-outline-danger btn-sm rounded-3 flex-grow-1"
-                          style={{ fontSize: '12px', padding: '6px 12px' }}
-                          onClick={() => rejectPurchase(item.id)}
-                        >
-                          ❌ No, I didn't
-                        </button>
+                    <div key={item.id} className="position-relative">
+                      <CardA item={item} onClick={() => setPurchaseModal({ item, mode: 'pending' })} />
+                      <div className="position-absolute d-flex gap-2" style={{ bottom: '12px', right: '12px', zIndex: 2 }}>
+                        <button className="btn btn-dark btn-sm rounded-pill" style={{ fontSize: '11px', padding: '4px 14px' }} onClick={e => { e.stopPropagation(); confirmPurchase(item.id); }}>✅ Yes, I bought this</button>
+                        <button className="btn btn-sm rounded-pill" style={{ fontSize: '11px', padding: '4px 14px', background: 'var(--sand)', color: 'var(--faint)', border: '1px solid var(--sand3)' }} onClick={e => { e.stopPropagation(); rejectPurchase(item.id); }}>❌ No, I didn't</button>
                       </div>
                     </div>
                   ))}
@@ -328,41 +361,23 @@ export default function Profile() {
         {/* ── Purchased tab ─────────────────────────────────────────────── */}
         {tab === 'purchased' && (
           purchasedItems.length ? (
-            <div className="d-flex flex-column gap-3">
+            <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
               {purchasedItems.map(item => {
                 const existing = givenReviews[item.id] ?? null;
                 return (
-                  <div key={item.id} className="card border p-4 rounded-4">
-                    <div className="d-flex align-items-start justify-content-between flex-wrap gap-3">
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="fw-bold text-truncate" style={{ fontFamily: 'Syne,sans-serif', fontSize: '15px' }}>{item.title}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
-                          ${item.price} · {item.condition} · Sold by {item.owner?.name}
-                        </div>
-                        {existing && (
-                          <div className="mt-2 d-flex align-items-center gap-2">
-                            <span style={{ color: '#f59e0b', fontSize: '13px' }}>
-                              {'★'.repeat(existing.stars)}{'☆'.repeat(5 - existing.stars)}
-                            </span>
-                            {existing.comment && (
-                              <span style={{ fontSize: '12px', color: 'var(--faint)', fontStyle: 'italic' }}>
-                                "{existing.comment}"
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                  <div key={item.id} className="col">
+                    <div className="position-relative h-100">
+                      <CardA item={item} onClick={() => setPurchaseModal({ item, mode: 'purchased', existing })} />
                       <button
-                        className="btn btn-sm rounded-3"
+                        className="btn btn-sm rounded-pill position-absolute"
                         style={{
-                          fontSize: '12px',
-                          padding: '6px 14px',
+                          fontSize: '11px', padding: '4px 12px',
                           background: existing ? 'var(--sand)' : '#18181b',
                           color: existing ? 'var(--faint)' : '#fff',
                           border: existing ? '1px solid var(--sand3)' : 'none',
-                          flexShrink: 0,
+                          bottom: '12px', right: '12px', zIndex: 2,
                         }}
-                        onClick={() => setReviewTarget({ listing: item, existing })}
+                        onClick={e => { e.stopPropagation(); setReviewTarget({ listing: item, existing }); }}
                       >
                         {existing ? '✏️ Edit review' : '⭐ Give review'}
                       </button>
@@ -456,6 +471,18 @@ export default function Profile() {
             showToast('Review deleted', '🗑️');
             setReviewsLoaded(false);
           }}
+        />
+      )}
+
+      {purchaseModal && (
+        <PurchaseDetailModal
+          item={purchaseModal.item}
+          mode={purchaseModal.mode}
+          existing={purchaseModal.existing ?? null}
+          onClose={() => setPurchaseModal(null)}
+          onConfirm={() => confirmPurchase(purchaseModal.item.id)}
+          onReject={() => rejectPurchase(purchaseModal.item.id)}
+          onReview={() => setReviewTarget({ listing: purchaseModal.item, existing: purchaseModal.existing ?? null })}
         />
       )}
     </>
