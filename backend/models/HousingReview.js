@@ -30,52 +30,64 @@ function findArea(areaId) {
   return housing.find(h => h.id === id);
 }
 
+function recomputeAggregates(area) {
+  const totalStars = area.housingReviews.reduce((sum, r) => sum + r.stars, 0);
+  area.reviewCount   = area.housingReviews.length;
+  area.averageRating = area.reviewCount > 0 ? +(totalStars / area.reviewCount).toFixed(1) : 0;
+}
+
 const HousingReviewModel = {
-  // MongoDB:
-  //   return HousingReviewMongoose
-  //     .find({ area: areaId })
-  //     .populate('reviewer', 'name')
-  //     .sort({ createdAt: -1 });
   getByArea(areaId) {
     const area = findArea(areaId);
     return area ? area.housingReviews : null;
   },
 
-  // MongoDB:
-  //   const review = await new HousingReviewMongoose({ ...data, area: areaId }).save();
-  //   const stats = await HousingReviewMongoose.aggregate([
-  //     { $match: { area: review.area } },
-  //     { $group: { _id: '$area', avg: { $avg: '$stars' }, count: { $sum: 1 } } },
-  //   ]);
-  //   await HousingArea.findByIdAndUpdate(areaId, {
-  //     averageRating: stats[0].avg,
-  //     reviewCount:   stats[0].count,
-  //   });
-  //   return review.populate('reviewer', 'name');
   create(areaId, data) {
     const area = findArea(areaId);
     if (!area) return null;
 
     const review = {
-      reviewer:  data.reviewer,            // populated User shape { name } in mock mode
-      stars:     data.stars,
-      comment:   data.comment || '',
-      createdAt: new Date().toISOString(),
+      id:          Date.now(),
+      reviewerId:  data.reviewerId,
+      reviewer:    { name: data.reviewerName },
+      stars:       data.stars,
+      comment:     data.comment || '',
+      createdAt:   new Date().toISOString(),
     };
 
-    // Newest review first so the modal's review list shows it at the top.
     area.housingReviews = [review, ...area.housingReviews];
+    recomputeAggregates(area);
 
-    // Recompute aggregates on the parent area.
-    const totalStars = area.housingReviews.reduce((sum, r) => sum + r.stars, 0);
-    area.reviewCount   = area.housingReviews.length;
-    area.averageRating = +(totalStars / area.reviewCount).toFixed(1);
+    return { review, averageRating: area.averageRating, reviewCount: area.reviewCount };
+  },
 
-    return {
-      review,
-      averageRating: area.averageRating,
-      reviewCount:   area.reviewCount,
-    };
+  update(areaId, reviewId, userId, data) {
+    const area = findArea(areaId);
+    if (!area) return { error: 'not_found' };
+
+    const review = area.housingReviews.find(r => r.id === reviewId);
+    if (!review) return { error: 'not_found' };
+    if (review.reviewerId !== userId) return { error: 'forbidden' };
+
+    if (data.stars !== undefined)   review.stars   = data.stars;
+    if (data.comment !== undefined) review.comment = data.comment;
+    recomputeAggregates(area);
+
+    return { review, averageRating: area.averageRating, reviewCount: area.reviewCount };
+  },
+
+  remove(areaId, reviewId, userId) {
+    const area = findArea(areaId);
+    if (!area) return { error: 'not_found' };
+
+    const idx = area.housingReviews.findIndex(r => r.id === reviewId);
+    if (idx === -1) return { error: 'not_found' };
+    if (area.housingReviews[idx].reviewerId !== userId) return { error: 'forbidden' };
+
+    area.housingReviews.splice(idx, 1);
+    recomputeAggregates(area);
+
+    return { averageRating: area.averageRating, reviewCount: area.reviewCount };
   },
 };
 

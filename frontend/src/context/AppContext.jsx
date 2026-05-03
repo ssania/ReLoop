@@ -45,8 +45,8 @@ export function AppProvider({ children }) {
           housingRes.json(),
         ]);
 
-        setListings(listData);
-        setHousing(housingData);
+        setListings(Array.isArray(listData) ? listData : []);
+        setHousing(Array.isArray(housingData) ? housingData : []);
 
         // Only fetch favorites if logged in.
         if (token) {
@@ -160,12 +160,12 @@ export function AppProvider({ children }) {
     }
   }, [showToast, token]);
 
-  const addHousingReview = useCallback(async (areaId, { reviewerName, stars, comment }) => {
+  const addHousingReview = useCallback(async (areaId, { stars, comment }) => {
     try {
       const res = await fetch(`${API}/housing/${areaId}/reviews`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewer: { name: reviewerName }, stars, comment }),
+        headers: authHeaders(),
+        body: JSON.stringify({ stars, comment }),
       });
       if (!res.ok) {
         const { message } = await res.json().catch(() => ({}));
@@ -183,12 +183,62 @@ export function AppProvider({ children }) {
       showToast('Could not post review', '⚠️');
       return false;
     }
-  }, [showToast]);
+  }, [showToast, authHeaders]);
+
+  const editHousingReview = useCallback(async (areaId, reviewId, { stars, comment }) => {
+    try {
+      const res = await fetch(`${API}/housing/${areaId}/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ stars, comment }),
+      });
+      if (!res.ok) {
+        const { message } = await res.json().catch(() => ({}));
+        throw new Error(message || `HTTP ${res.status}`);
+      }
+      const { review, averageRating, reviewCount } = await res.json();
+      setHousing(prev => prev.map(h => h.id === areaId
+        ? { ...h, housingReviews: h.housingReviews.map(r => r.id === reviewId ? review : r), averageRating, reviewCount }
+        : h
+      ));
+      showToast('Review updated', '✏️');
+      return true;
+    } catch (err) {
+      console.error('Failed to edit housing review:', err);
+      showToast('Could not update review', '⚠️');
+      return false;
+    }
+  }, [showToast, authHeaders]);
+
+  const deleteHousingReview = useCallback(async (areaId, reviewId) => {
+    try {
+      const res = await fetch(`${API}/housing/${areaId}/reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const { message } = await res.json().catch(() => ({}));
+        throw new Error(message || `HTTP ${res.status}`);
+      }
+      const { averageRating, reviewCount } = await res.json();
+      setHousing(prev => prev.map(h => h.id === areaId
+        ? { ...h, housingReviews: h.housingReviews.filter(r => r.id !== reviewId), averageRating, reviewCount }
+        : h
+      ));
+      showToast('Review deleted', '🗑️');
+      return true;
+    } catch (err) {
+      console.error('Failed to delete housing review:', err);
+      showToast('Could not delete review', '⚠️');
+      return false;
+    }
+  }, [showToast, token]);
 
   return (
     <AppContext.Provider value={{
       listings, housing, loading,
-      addListing, updateListing, deleteListing, confirmPurchase, rejectPurchase, addHousingReview,
+      addListing, updateListing, deleteListing, confirmPurchase, rejectPurchase,
+      addHousingReview, editHousingReview, deleteHousingReview,
       favoriteIds, toggleFavorite, showToast, toast,
     }}>
       {children}

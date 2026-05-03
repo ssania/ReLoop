@@ -6,7 +6,7 @@
 // Changes from original are marked with // ← AUTH
 
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // ← AUTH
 
 const NAV_ITEMS = [
@@ -19,6 +19,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth(); // ← AUTH
+  const { pathname } = useLocation();
 
   // ← AUTH: logout and redirect home
   function handleLogout() {
@@ -72,8 +73,8 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Desktop CTA — only when logged in */}
-        {user && (
+        {/* Desktop CTA — only when logged in and not on the Profile page */}
+        {user && pathname !== '/profile' && (
           <button
             className="btn btn-dark rounded-3 d-none d-lg-block"
             style={{ fontSize: '13px', padding: '9px 20px' }}

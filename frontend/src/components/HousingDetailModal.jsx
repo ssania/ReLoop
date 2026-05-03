@@ -10,27 +10,27 @@
 // Body-scroll lock and backdrop-click-to-close follow the same pattern as
 // DetailModal (see that file for the explanation).
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Home, Package, Bus, Compass, Phone, Mail, Globe, MapPin } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../data/constants';
 import HousingImageCarousel from './HousingImageCarousel';
 
-// Hardcoded current user until JWT auth is implemented; matches the
-// "John Doe" identity used on the Profile page.
-const CURRENT_USER_NAME = 'John Doe';
-
 export default function HousingDetailModal({ h, onClose }) {
-  // showToast powers the "Contact area managers" toast.
-  // addHousingReview posts to /api/housing/:areaId/reviews and updates context.
-  const { showToast, addHousingReview } = useApp();
+  const { showToast, addHousingReview, editHousingReview, deleteHousingReview } = useApp();
+  const { user } = useAuth();
 
-  // Review-form local state.
-  const [stars, setStars] = useState(5);
+  const [stars, setStars] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Lock body scroll while modal is open; restore on unmount.
+  // editingId: review id currently being edited, null when not editing.
+  const [editingId, setEditingId] = useState(null);
+  const [editStars, setEditStars] = useState(5);
+  const [editComment, setEditComment] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -39,21 +39,34 @@ export default function HousingDetailModal({ h, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
-    if (!comment.trim()) {
-      showToast('Add a short comment first', '✏️');
-      return;
-    }
+    if (!stars) { showToast('Select a star rating first', '⭐'); return; }
+    if (!comment.trim()) { showToast('Add a short comment first', '✏️'); return; }
     setSubmitting(true);
-    const ok = await addHousingReview(h.id, {
-      reviewerName: CURRENT_USER_NAME,
-      stars,
-      comment: comment.trim(),
-    });
+    const ok = await addHousingReview(h.id, { stars, comment: comment.trim() });
     setSubmitting(false);
-    if (ok) {
-      setStars(5);
-      setComment('');
-    }
+    if (ok) { setStars(0); setComment(''); }
+  };
+
+  const startEdit = (r) => {
+    setEditingId(r.id);
+    setEditStars(r.stars);
+    setEditComment(r.comment);
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const handleEditSubmit = async (e, reviewId) => {
+    e.preventDefault();
+    if (editSubmitting) return;
+    if (!editComment.trim()) { showToast('Comment cannot be empty', '✏️'); return; }
+    setEditSubmitting(true);
+    const ok = await editHousingReview(h.id, reviewId, { stars: editStars, comment: editComment.trim() });
+    setEditSubmitting(false);
+    if (ok) setEditingId(null);
+  };
+
+  const handleDelete = async (reviewId) => {
+    await deleteHousingReview(h.id, reviewId);
   };
 
   return (
@@ -104,7 +117,7 @@ export default function HousingDetailModal({ h, onClose }) {
             {/* Key info – 4 stat tiles in a 2-column Bootstrap grid. */}
             <Section title="Key info">
               <div className="row g-2">
-                {[['Distance', `${h.distance} mi from campus`], ['Rent range', `$${h.rentMin.toLocaleString()} – $${h.rentMax.toLocaleString()}/mo`], ['Area rating', `⭐ ${h.averageRating.toFixed(1)} (${h.reviewCount} reviews)`], ['Typical type', h.type]].map(([label, val]) => (
+                {[['Distance', `${h.distance} mi from campus`], ['Rent range', `$${h.rentMin.toLocaleString()} – $${h.rentMax.toLocaleString()}/mo`], ['Area rating', h.reviewCount > 0 ? `⭐ ${h.averageRating.toFixed(1)} (${h.reviewCount} review${h.reviewCount === 1 ? '' : 's'})` : 'No reviews yet'], ['Typical type', h.type]].map(([label, val]) => (
                   <div key={label} className="col-6">
                     <div className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                       <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '9px', letterSpacing: '1px', color: 'var(--muted)' }}>{label}</div>
@@ -194,66 +207,79 @@ export default function HousingDetailModal({ h, onClose }) {
             {/* Student reviews – pulled from h.housingReviews. */}
             <Section title="Student reviews">
               <div className="d-flex flex-column gap-2">
-                {h.housingReviews.map((r, i) => (
-                  <div key={i} className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <span className="fw-medium" style={{ fontSize: '12px' }}>{r.reviewer.name}</span>
-                      <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{formatDate(r.createdAt)} · {'⭐'.repeat(r.stars)}</span>
+                {h.housingReviews.map((r, i) => {
+                  const isOwn = user && r.reviewerId === user.id;
+                  const isEditing = editingId === r.id;
+                  return (
+                    <div key={r.id ?? i} className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
+                      {isEditing ? (
+                        <form onSubmit={e => handleEditSubmit(e, r.id)}>
+                          <StarPicker stars={editStars} setStars={setEditStars} />
+                          <textarea
+                            value={editComment}
+                            onChange={e => setEditComment(e.target.value)}
+                            rows={3}
+                            maxLength={500}
+                            className="form-control mb-2"
+                            style={{ fontSize: '12px', fontWeight: 300, resize: 'vertical' }}
+                          />
+                          <div className="d-flex gap-2 justify-content-end">
+                            <button type="button" onClick={cancelEdit} className="btn btn-sm rounded-3" style={{ fontSize: '12px' }}>Cancel</button>
+                            <button type="submit" disabled={editSubmitting} className="btn btn-sm rounded-3 text-white fw-medium" style={{ background: 'var(--sage)', fontSize: '12px', opacity: editSubmitting ? 0.7 : 1 }}>
+                              {editSubmitting ? 'Saving…' : 'Save'}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          <div className="d-flex align-items-center justify-content-between mb-2">
+                            <span className="fw-medium" style={{ fontSize: '12px' }}>{r.reviewer.name}</span>
+                            <div className="d-flex align-items-center gap-2">
+                              <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{formatDate(r.createdAt)} · {'⭐'.repeat(r.stars)}</span>
+                              {isOwn && (
+                                <>
+                                  <button onClick={() => startEdit(r)} className="btn p-0" style={{ fontSize: '11px', color: 'var(--sage)', border: 'none', background: 'transparent' }}>Edit</button>
+                                  <button onClick={() => handleDelete(r.id)} className="btn p-0" style={{ fontSize: '11px', color: 'var(--terra)', border: 'none', background: 'transparent' }}>Delete</button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <p className="mb-0" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.6 }}>{r.comment}</p>
+                        </>
+                      )}
                     </div>
-                    <p className="mb-0" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.6 }}>{r.comment}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Inline review form. Posts to /api/housing/:areaId/reviews via
-                  addHousingReview; the response merges into context so the new
-                  review appears at the top of the list above without a refetch. */}
-              <form onSubmit={handleSubmit} className="p-3 rounded-3 mt-2" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
-                <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>
-                  Leave a review as {CURRENT_USER_NAME}
-                </div>
-
-                {/* Star picker – click a star to set the rating 1–5. */}
-                <div className="d-flex align-items-center gap-1 mb-2" role="radiogroup" aria-label="Rating">
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <button
-                      key={n}
-                      type="button"
-                      role="radio"
-                      aria-checked={stars === n}
-                      aria-label={`${n} star${n === 1 ? '' : 's'}`}
-                      onClick={() => setStars(n)}
-                      className="btn p-0"
-                      style={{ fontSize: '18px', lineHeight: 1, opacity: n <= stars ? 1 : 0.3, background: 'transparent', border: 'none' }}
-                    >
-                      ⭐
+              {/* Show review form only to logged-in users. */}
+              {user ? (
+                <form onSubmit={handleSubmit} className="p-3 rounded-3 mt-2" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
+                  <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>
+                    Leave a review as {user.name}
+                  </div>
+                  <StarPicker stars={stars} setStars={setStars} />
+                  <textarea
+                    value={comment}
+                    onChange={e => setComment(e.target.value)}
+                    placeholder="Share what it's like to live here…"
+                    rows={3}
+                    maxLength={500}
+                    className="form-control mb-2"
+                    style={{ fontSize: '12px', fontWeight: 300, resize: 'vertical' }}
+                  />
+                  <div className="d-flex align-items-center justify-content-between">
+                    <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{comment.length}/500</span>
+                    <button type="submit" disabled={submitting} className="btn rounded-3 fw-medium text-white" style={{ background: 'var(--sage)', fontSize: '12px', padding: '6px 16px', opacity: submitting ? 0.7 : 1 }}>
+                      {submitting ? 'Posting…' : 'Post review'}
                     </button>
-                  ))}
-                  <span className="ms-2" style={{ fontSize: '11px', color: 'var(--muted)' }}>{stars}/5</span>
+                  </div>
+                </form>
+              ) : (
+                <div className="p-3 rounded-3 mt-2 text-center" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)', fontSize: '12px', color: 'var(--muted)' }}>
+                  <a href="/login" style={{ color: 'var(--sage)', textDecoration: 'none', fontWeight: 500 }}>Log in</a> to leave a review.
                 </div>
-
-                <textarea
-                  value={comment}
-                  onChange={e => setComment(e.target.value)}
-                  placeholder="Share what it's like to live here…"
-                  rows={3}
-                  maxLength={500}
-                  className="form-control mb-2"
-                  style={{ fontSize: '12px', fontWeight: 300, resize: 'vertical' }}
-                />
-
-                <div className="d-flex align-items-center justify-content-between">
-                  <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{comment.length}/500</span>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="btn rounded-3 fw-medium text-white"
-                    style={{ background: 'var(--sage)', fontSize: '12px', padding: '6px 16px', opacity: submitting ? 0.7 : 1 }}
-                  >
-                    {submitting ? 'Posting…' : 'Post review'}
-                  </button>
-                </div>
-              </form>
+              )}
             </Section>
 
             {/* Contact – only renders rows for populated fields; the whole section is skipped if all are empty. */}
@@ -303,8 +329,26 @@ export default function HousingDetailModal({ h, onClose }) {
   );
 }
 
-// Section: local layout helper to avoid repeating the label + children wrapper
-// for each of the modal's content blocks (About, Key info, Floor plans, etc.).
+function StarPicker({ stars, setStars }) {
+  return (
+    <div className="d-flex align-items-center gap-1 mb-2" role="radiogroup" aria-label="Rating">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={stars === n}
+          aria-label={`${n} star${n === 1 ? '' : 's'}`}
+          onClick={() => setStars(n)}
+          className="btn p-0"
+          style={{ fontSize: '18px', lineHeight: 1, opacity: n <= stars ? 1 : 0.3, background: 'transparent', border: 'none' }}
+        >⭐</button>
+      ))}
+      <span className="ms-2" style={{ fontSize: '11px', color: 'var(--muted)' }}>{stars}/5</span>
+    </div>
+  );
+}
+
 function Section({ title, children }) {
   return (
     <div className="mb-4">
