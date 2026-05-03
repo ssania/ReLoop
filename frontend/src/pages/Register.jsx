@@ -83,7 +83,8 @@ export default function Register() {
             <div className="text-center py-2">
               <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📬</div>
               <div className="fw-bold mb-2" style={{ fontFamily: 'Syne,sans-serif', fontSize: '15px' }}>Check your inbox</div>
-              <p style={{ fontSize: '13px', color: 'var(--muted)', fontWeight: 300, marginBottom: '16px' }}>{success}</p>
+              <p style={{ fontSize: '13px', color: 'var(--muted)', fontWeight: 300, marginBottom: '8px' }}>We sent a verification link to <span style={{ color: 'var(--sage)', fontWeight: 500 }}>{email}</span>. Please check your inbox and click the link to activate your account.</p>
+              <p style={{ fontSize: '12px', color: 'var(--muted)', fontWeight: 300, marginBottom: '16px' }}>Wrong email? <button onClick={() => setSuccess('')} className="btn p-0" style={{ fontSize: '12px', color: 'var(--sage)', fontWeight: 500, border: 'none', background: 'transparent' }}>Register again</button> with the correct address.</p>
               <Link to="/login" className="btn btn-dark rounded-3 px-4 py-2" style={{ fontSize: '13px' }}>Go to login</Link>
             </div>
           ) : (
