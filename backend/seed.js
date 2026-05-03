@@ -1,30 +1,22 @@
 // ── seed.js ───────────────────────────────────────────────────────────────────
-// Wipes the entire database and reseeds only housing data.
-// Users and listings are created via the app.
+// Reseeds only housing areas and their reviews.
+// Users, listings, and reviews are left untouched.
 //
 // Usage: node backend/seed.js
 
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const mongoose      = require('mongoose');
-const User          = require('./models/User');
-const { ListingMongoose: Listing }     = require('./models/Listing');
-const { ReviewMongoose: Review }       = require('./models/Review');
 const { HousingMongoose: HousingArea } = require('./models/Housing');
-const HousingReview                    = require('./models/HousingReview');
 const { housing: housingData }         = require('./data/mockData');
 
 async function seed() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log('Connected to MongoDB');
 
-  await Promise.all([
-    Review.deleteMany({}),
-    Listing.deleteMany({}),
-    User.deleteMany({}),
-    HousingReview.deleteMany({}),
-    HousingArea.deleteMany({}),
-  ]);
-  console.log('Cleared all collections');
+  const { HousingReviewMongoose } = require('./models/HousingReview');
+  await HousingReviewMongoose.deleteMany({});
+  await HousingArea.deleteMany({});
+  console.log('Cleared housing areas and reviews');
 
   for (const h of housingData) {
     const { housingReviews, id, emoji, ...areaFields } = h;
@@ -32,7 +24,7 @@ async function seed() {
     console.log(`  ✓ ${area.name}`);
   }
 
-  console.log('\nDone. Register a new account to start using the app.');
+  console.log('\nDone. Users, listings, and reviews are untouched.');
   await mongoose.disconnect();
 }
 
