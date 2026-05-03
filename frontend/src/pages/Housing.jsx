@@ -28,6 +28,9 @@ export default function Housing() {
   const [rentFilter, setRentFilter] = useState('');
   const [busFilter, setBusFilter] = useState('');
 
+  // Derive unique bus routes from all housing areas, sorted.
+  const allBusRoutes = [...new Set(housing.flatMap(h => h.busRoutes ?? []))].sort();
+
   // selectedH: id of the housing area whose modal is open (null = closed).
   // We store the id rather than the object so the modal always reads the
   // latest version from context (e.g. after a review is posted).
@@ -41,10 +44,10 @@ export default function Housing() {
 
   // Derived list: apply all active filters to the housing array.
   const list = housing.filter(h => {
-    // "Close to campus" tab: rentMin threshold acts as a proxy for proximity.
-    if (activeTab === 'close' && h.rentMin > 1200) return false;
-    // "Budget friendly" tab: only show the most affordable areas.
-    if (activeTab === 'budget' && h.rentMin > 950) return false;
+    // "Close to campus" tab: only areas within 2 miles of campus.
+    if (activeTab === 'close' && h.distance >= 2) return false;
+    // "Budget friendly" tab: only areas whose starting rent is ≤ $1,950/mo.
+    if (activeTab === 'budget' && h.rentMin > 1950) return false;
     // Text search: case-insensitive match against name and description.
     if (search && !h.name.toLowerCase().includes(search.toLowerCase()) && !h.description.toLowerCase().includes(search.toLowerCase())) return false;
     // Rent filter: hide areas whose starting rent exceeds the selected ceiling.
@@ -89,13 +92,12 @@ export default function Housing() {
             <option value="1400">Under $1,400/mo</option>
             <option value="2000">Under $2,000/mo</option>
           </select>
-          {/* PVTA bus route filter. */}
+          {/* PVTA bus route filter — options derived from live housing data. */}
           <select className="form-select w-auto" value={busFilter} onChange={e => setBusFilter(e.target.value)}>
             <option value="">Any bus</option>
-            <option value="30">PVTA #30</option>
-            <option value="31">PVTA #31</option>
-            <option value="33">PVTA #33</option>
-            <option value="45">PVTA #45</option>
+            {allBusRoutes.map(route => (
+              <option key={route} value={route.replace(/[^0-9]/g, '')}>{route}</option>
+            ))}
           </select>
         </div>
       </div>
