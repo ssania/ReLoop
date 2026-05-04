@@ -320,7 +320,7 @@ const housing = [
     busRoutes:     ['PVTA #30'],
     imageUrls:     [],
     floorPlans:    [
-      { layout: '4 Bed / 2.5 Bath', sqft: 1600, description: 'Four-bedroom group layout with 2.5 baths, in-unit laundry, and a spacious common area.', imageUrl: '', imageKey: '' },
+      { layout: '4 Bed / 4 Bath', sqft: 1600, description: 'Four-bedroom group layout with 2.5 baths, in-unit laundry, and a spacious common area.', imageUrl: '', imageKey: '' },
     ],
     coordinates:   { lat: 42.3770, lng: -72.5170 },
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1OeuYay_QJOGGpwW5_fHk_-QLvrOt7Dw&ehbc=2E312F',
