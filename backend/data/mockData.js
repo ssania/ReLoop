@@ -238,7 +238,7 @@ const housing = [
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1tPjSe32zjzN2N4Xwq7h6wzQqgQtglLc&ehbc=2E312F',
     averageRating: 0,
     reviewCount:   0,
-    contact:       { phone: '833-429-2840', email: '', website: 'https://www.thesocialamherst.com', address: '' },
+    contact:       { phone: '833-429-2833', email: '', website: 'https://www.thesocialamherst.com', address: '' },
     housingReviews: [],
   },
   {
