@@ -251,7 +251,7 @@ const housing = [
     rentMin:       1600,
     rentMax:       1700,
     amenities:     ['Newly renovated', 'Laundry building', 'Close to campus', 'Near bus routes'],
-    busRoutes:     ['PVTA #30', 'PVTA #31'],
+    busRoutes:     ['PVTA #30','PVTA #31','PVTA #33','PVTA #46'],
     imageUrls:     [],
     floorPlans:    [
       { layout: '2 Bed / 1 Bath', sqft: 770, description: 'Renovated two-bedroom layout and the only configuration at the property, aimed at pairs of roommates who want to stay close to campus.', imageUrl: '', imageKey: '' },
