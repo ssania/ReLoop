@@ -11,7 +11,7 @@ const housing = [
     description:   'A quiet, pet-friendly garden-style community with a mixed student and young-professional crowd.\n\n🏠 The Community\nSet on beautifully landscaped grounds with walking paths and a calm, neighbourly vibe. Draws a mix of UMass, Amherst College, and Hampshire College students alongside families and professionals. Dogs and cats welcome with standard pet terms.\n\n💡 What\'s Included\nIn-unit full kitchen appliances, assigned parking, and on-site laundry. Rent typically excludes heat, electricity, and internet — budget for utilities separately.\n\n🚌 Getting Around\n1.2 mi from UMass; PVTA Route 31 stops nearby. Downtown Amherst is a short drive or one bus ride. Grocery runs usually need a car or bus trip.\n\n✅ Good To Know\nResponsive on-site maintenance and clean grounds are the standout wins. The main tradeoff is the walk to groceries — plan for PVTA or a vehicle.',
     distance:      1.9,
     rentMin:       1995,
-    rentMax:       3300,
+    rentMax:       2450,
     amenities:     ['Pet friendly', 'Beautiful grounds', 'Responsive maintenance', 'Near downtown'],
     busRoutes:     ['PVTA #31'],
     imageUrls:     [],
