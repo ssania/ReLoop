@@ -317,7 +317,7 @@ const housing = [
     rentMin:       3100,
     rentMax:       3400,
     amenities:     ['Walk to downtown', 'Near grocery stores', 'Near restaurants', 'Spacious common areas', 'Quiet environment', 'In-unit laundry'],
-    busRoutes:     ['PVTA #30', 'PVTA #31', 'PVTA #33', 'PVTA B43'],
+    busRoutes:     ['PVTA #30'],
     imageUrls:     [],
     floorPlans:    [
       { layout: '4 Bed / 2.5 Bath', sqft: 1600, description: 'Four-bedroom group layout with 2.5 baths, in-unit laundry, and a spacious common area.', imageUrl: '', imageKey: '' },
