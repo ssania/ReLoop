@@ -326,7 +326,7 @@ const housing = [
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1OeuYay_QJOGGpwW5_fHk_-QLvrOt7Dw&ehbc=2E312F',
     averageRating: 0,
     reviewCount:   0,
-    contact:       { phone: '', email: 'showings@413lease.com', website: 'https://www.spruceridgeamherst.com/', address: '' },
+    contact:       { phone: '413-725-5050', email: 'showings@413lease.com', website: 'https://www.spruceridgeamherst.com/', address: '' },
     housingReviews: [],
   },
   {
