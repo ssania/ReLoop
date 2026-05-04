@@ -230,7 +230,7 @@ const housing = [
     imageUrls:     [],
     floorPlans:    [
       { layout: '2 Bed / 1 Bath',   sqft: 862,  description: 'Entry-level two-bedroom option and the most affordable way into the property.', imageUrl: '', imageKey: '' },
-      { layout: '2 Bed / 1 Bath', sqft: 1023, description: 'Larger two-bedroom with an extra half-bath that makes roommate life noticeably easier.', imageUrl: '', imageKey: '' },
+      { layout: '2 Bed / 1 Bath', sqft: 1023, description: 'Larger two-bedroom layout that makes roommate life noticeably easier.', imageUrl: '', imageKey: '' },
       { layout: '2 Bed / 1.5 Bath', sqft: 1023,  description: 'Larger two-bedroom setup that trades common-space size for a lower per-person split.', imageUrl: '', imageKey: '' },
       { layout: '3 Bed / 1 Bath', sqft: 920, description: 'Largest shared layout, aimed at full roommate groups who want to keep per-person rent down.', imageUrl: '', imageKey: '' },
     ],
