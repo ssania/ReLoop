@@ -298,6 +298,7 @@ const housing = [
     busRoutes:     ['PVTA #30'],
     imageUrls:     [],
     floorPlans:    [
+      { layout: 'studio', sqft: 407, description: 'Updated studio apartment designed for someone who want easy access to both campus and downtown.', imageUrl: '', imageKey: '' },
     ],
     coordinates:   { lat: 42.3760, lng: -72.5180 },
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1nhQNS4-i1jaVpir4fH7zB9N7tAUets0&ehbc=2E312F',
