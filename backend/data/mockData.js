@@ -282,7 +282,7 @@ const housing = [
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1muhjWyjfjU1D1d_KChGJVDyLQWZiHTw&ehbc=2E312F',
     averageRating: 0,
     reviewCount:   0,
-    contact:       { phone: '413-552-8267', email: '', website: 'https://www.lanterncourtapartments.com/home.html', address: '' },
+    contact:       { phone: '413-552-8267', email: '', website: 'https://www.lanterncourtapartments.com/home.html', address: '253 Amherst Rd, Sunderland, MA 01375' },
     housingReviews: [],
   },
   {
