@@ -249,7 +249,7 @@ const housing = [
     description:   'A close-to-campus North Pleasant Street option with recently refreshed interiors and one of the easiest walks to UMass in this dataset.\n\n🏠 The Community\nPresidential is a smaller student-oriented property that appeals to renters who care more about location than a long amenity list. The apartments feel newer than the building itself thanks to renovation work, and residents generally like the cleaned-up interiors and practical layout. The main complaints are occasional party noise, slower-than-ideal maintenance response at times, and the lack of built-in air conditioning.\n\n💡 What\'s Included\nThe property centers on a single layout: 2 Bed / 1 Bath apartments. Updated kitchen and bathroom finishes, surface parking, and access to a separate laundry building make up the core amenity set. Utilities are billed separately.\n\n🚌 Getting Around\nAt roughly 0.5 mi from UMass, this is one of the most walkable off-campus options here. PVTA Routes 30 and 31 are nearby as backup when weather is bad, so residents rate the commute a near-best-in-class 5/5.\n\n✅ Good To Know\nMonthly rent sits at a flat $1,800, and a private bedroom usually works out to around $800–$900 depending on how the unit is split. Most apartments house two or three people. Overall satisfaction lands around 4/5, driven by the renovation work, laundry access, and location; the lack of AC is the issue that gets mentioned most often.',
     distance:      0.5,
     rentMin:       1600,
-    rentMax:       1800,
+    rentMax:       1700,
     amenities:     ['Newly renovated', 'Laundry building', 'Close to campus', 'Near bus routes'],
     busRoutes:     ['PVTA #30', 'PVTA #31'],
     imageUrls:     [],
