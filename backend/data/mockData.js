@@ -254,7 +254,7 @@ const housing = [
     busRoutes:     ['PVTA #30','PVTA #31','PVTA #33','PVTA #46'],
     imageUrls:     [],
     floorPlans:    [
-      { layout: '1 Bed / 1 Bath', sqft: 770, description: 'Renovated two-bedroom layout and the only configuration at the property, aimed at pairs of roommates who want to stay close to campus.', imageUrl: '', imageKey: '' },
+      { layout: '1 Bed / 1 Bath', sqft: 770, description: 'Renovated one-bedroom layout and the only configuration at the property, aimed at solo renters who want to stay close to campus.', imageUrl: '', imageKey: '' },
     ],
     coordinates:   { lat: 42.3910, lng: -72.5260 },
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1xaRSGiSMVgxK0grtUSr_-4hwNnbXwxs&ehbc=2E312F',
