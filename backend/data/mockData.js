@@ -260,7 +260,7 @@ const housing = [
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1xaRSGiSMVgxK0grtUSr_-4hwNnbXwxs&ehbc=2E312F',
     averageRating: 0,
     reviewCount:   0,
-    contact:       { phone: '413-253-2515', email: '', website: 'https://kaminsrealestate.com/our-rentals/our-complete-management-list/property/5002-presidential-apartments', address: '' },
+    contact:       { phone: '413-253-2515', email: '', website: 'https://kaminsrealestate.com/rental/presidential-apartments-1-bedroom-hhw/', address: '' },
     housingReviews: [],
   },
   {
