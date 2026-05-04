@@ -305,7 +305,7 @@ const housing = [
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1nhQNS4-i1jaVpir4fH7zB9N7tAUets0&ehbc=2E312F',
     averageRating: 0,
     reviewCount:   0,
-    contact:       { phone: '', email: 'showings@413lease.com', website: 'https://www.centereastcommons.com/', address: '' },
+    contact:       { phone: '413-636-5230', email: 'showings@413lease.com', website: 'https://www.centereastcommons.com/', address: '' },
     housingReviews: [],
   },
   {
