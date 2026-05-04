@@ -6,6 +6,8 @@
 // To activate: uncomment connectDB() in server.js and swap
 // each method body in Section 2 with its MongoDB version.
 
+// ── Listing Model ────────────────────────────────────────────────────────────
+
 const mongoose = require('mongoose');
 
 const listingSchema = new mongoose.Schema({
@@ -15,43 +17,63 @@ const listingSchema = new mongoose.Schema({
   category:    { type: String },
   price:       { type: Number, required: true },
   condition:   { type: String, enum: ['New', 'Like New', 'Good', 'Fair'] },
-  status:      { type: String, enum: ['Available', 'In-talk', 'Sold'], default: 'Available' },
-  imageUrls:   [{ url: { type: String, required: true }, key: { type: String, required: true } }],
+  status:      { type: String, enum: ['Available', 'In-talk', 'pending-confirmation', 'Sold'], default: 'Available' },
+  buyer:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  imageUrls:   [{ 
+    url: { type: String, required: true }, 
+    key: { type: String, required: true } 
+  }],
   tags:        [String],
 }, { timestamps: true });
 
-// Exported so seed.js can use it directly.
 const ListingMongoose = mongoose.model('Listing', listingSchema);
 
-// ============================================================
-// SECTION 2 — MOCK WRAPPER (active while MongoDB is not connected)
-// ============================================================
-// Controllers call these methods. Swap the bodies to MongoDB
-// versions (shown in comments) when the DB is connected.
-
-const { initialListings } = require('../data/mockData');
-
-let listings = [...initialListings];
+function normalize(doc) {
+  if (!doc) return null;
+  const obj = doc._id ? doc : doc;
+  return { ...obj, id: obj._id.toString() };
+}
 
 const ListingModel = {
-  // MongoDB: return ListingMongoose.find({}).populate('owner', 'name avgRating');
-  getAll() {
-    return listings;
+
+  // ✅ GET ALL LISTINGS
+  async getAll() {
+    const docs = await ListingMongoose.find({})
+      .populate('owner', 'name avgRating email')
+      .populate('buyer', 'name email')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return docs.map(normalize);
   },
 
-  // MongoDB: return new ListingMongoose(data).save();
-  create(data) {
-    const newId = listings.length > 0 ? Math.max(...listings.map(l => l.id)) + 1 : 1;
-    const newListing = { ...data, id: newId };
-    listings = [newListing, ...listings];
-    return newListing;
+  // ✅ CREATE LISTING
+  async create(data) {
+    const doc = await ListingMongoose.create(data);
+
+    const populated = await doc.populate('owner', 'name avgRating email'); // ✅ FIXED
+
+    return normalize(populated.toObject());
   },
 
-  // MongoDB: return ListingMongoose.findByIdAndDelete(id);
-  remove(id) {
-    const before = listings.length;
-    listings = listings.filter(l => l.id !== id);
-    return listings.length < before;
+  // ✅ UPDATE LISTING
+  async update(id, changes) {
+    const doc = await ListingMongoose.findByIdAndUpdate(
+      id,
+      changes,
+      { new: true }
+    )
+      .populate('owner', 'name avgRating email')
+      .populate('buyer', 'name email')
+      .lean();
+
+    return normalize(doc);
+  },
+
+  // DELETE LISTING
+  async remove(id) {
+    const deleted = await ListingMongoose.findByIdAndDelete(id);
+    return !!deleted;
   },
 };
 

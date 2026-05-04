@@ -27,9 +27,9 @@ function statusClass(s) {
 }
 
 export default function CardA({ item, onClick }) {
-  const { savedIds, toggleSave } = useApp();
+  const { favoriteIds, toggleFavorite } = useApp();
 
-  const saved = savedIds.has(item.id);
+  const saved = favoriteIds.has(item.id);
 
   // Gradient background keyed on category; falls back to 'Other'.
   const bg = IMG_BG[item.category] || IMG_BG.Other;
@@ -44,20 +44,23 @@ export default function CardA({ item, onClick }) {
       <div className="position-relative d-flex align-items-center justify-content-center overflow-hidden"
         style={{ height: '180px', background: bg }}>
 
-        <span className={`card-status position-absolute top-0 start-0 m-2 ${statusClass(item.status)}`}>
+        <span className={`card-status position-absolute top-0 start-0 m-2 ${statusClass(item.status)}`} style={{ zIndex: 1 }}>
           <div className="card-status-dot"></div>
           <span className="card-status-label">{item.status}</span>
         </span>
 
         <button
           className={`card-save position-absolute top-0 end-0 m-2 ${saved ? 'saved' : ''}`}
-          onClick={e => { e.stopPropagation(); toggleSave(item.id); }}
+          style={{ zIndex: 1 }}
+          onClick={e => { e.stopPropagation(); toggleFavorite(item.id); }}
         >
           {saved ? '♥' : '♡'}
         </button>
 
-        {/* Emoji placeholder — replaced by real image once imageUrls are populated. */}
-        <div className="card-emoji">{item.emoji}</div>
+        {item.imageUrls?.length > 0
+          ? <img src={item.imageUrls[0].url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, zIndex: 0 }} />
+          : <div className="card-emoji">{item.emoji}</div>
+        }
       </div>
 
       {/* ── Card body ── */}

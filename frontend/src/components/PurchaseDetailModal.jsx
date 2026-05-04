@@ -1,20 +1,19 @@
-// ── Marketplace listing detail modal ──────────────────────────────────────────
-// Opens when the user clicks a CardA. Shows full listing info plus actions.
+// ── PurchaseDetailModal ───────────────────────────────────────────────────────
+// Variant of DetailModal used in Profile → Awaiting Confirmation and Purchased.
+// Shows full item details but replaces "Contact Seller" with the relevant action:
+//   mode="pending"   → Yes I bought this / No I didn't
+//   mode="purchased" → Give review / Edit review
 //
 // Props:
-//   item    – a listing object from AppContext.listings
-//   onClose – callback to clear selectedItem in the parent (unmounts this modal)
-//
-// Field mapping (schema → display):
-//   item.category        → eyebrow label + details grid
-//   item.condition       → tag pill + details grid
-//   item.description     → description paragraph
-//   item.createdAt       → "Posted" tile (formatted via formatDate)
-//   item.owner.name      → seller name + avatar initials
-//   item.owner.avgRating → seller star rating
+//   item        – listing object
+//   mode        – "pending" | "purchased"
+//   existing    – existing review object (purchased mode only)
+//   onClose     – close callback
+//   onConfirm   – confirm purchase callback (pending mode)
+//   onReject    – reject purchase callback (pending mode)
+//   onReview    – open review modal callback (purchased mode)
 
 import { useEffect, useState } from 'react';
-import { useApp } from '../context/AppContext';
 import { IMG_BG, formatDate } from '../data/constants';
 
 function statusClass(s) {
@@ -23,10 +22,7 @@ function statusClass(s) {
   return 'st-sold';
 }
 
-export default function DetailModal({ item, onClose }) {
-  const { favoriteIds, toggleFavorite, showToast } = useApp();
-
-  const saved    = favoriteIds.has(item.id);
+export default function PurchaseDetailModal({ item, mode, existing, onClose, onConfirm, onReject, onReview }) {
   const bg       = IMG_BG[item.category] || IMG_BG.Other;
   const initials = item.owner.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const images   = item.imageUrls || [];
@@ -47,7 +43,7 @@ export default function DetailModal({ item, onClose }) {
 
           <button className="dm-close" onClick={onClose}>✕</button>
 
-          {/* ── Hero image / carousel ── */}
+          {/* Hero image / carousel */}
           <div className="d-flex align-items-center justify-content-center position-relative overflow-hidden"
             style={{ height: 'clamp(200px,35vw,300px)', background: bg }}>
 
@@ -58,29 +54,18 @@ export default function DetailModal({ item, onClose }) {
 
             {images.length > 0 ? (
               <>
-                <img
-                  src={images[current].url}
-                  alt={`${item.title} ${current + 1}`}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
-                />
+                <img src={images[current].url} alt={`${item.title} ${current + 1}`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
                 {images.length > 1 && (
                   <>
-                    {/* Prev button */}
-                    <button
-                      onClick={e => { e.stopPropagation(); setCurrent(i => (i - 1 + images.length) % images.length); }}
-                      style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >‹</button>
-                    {/* Next button */}
-                    <button
-                      onClick={e => { e.stopPropagation(); setCurrent(i => (i + 1) % images.length); }}
-                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >›</button>
-                    {/* Dot indicators */}
+                    <button onClick={e => { e.stopPropagation(); setCurrent(i => (i - 1 + images.length) % images.length); }}
+                      style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+                    <button onClick={e => { e.stopPropagation(); setCurrent(i => (i + 1) % images.length); }}
+                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
                     <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 3, display: 'flex', gap: '6px' }}>
                       {images.map((_, i) => (
                         <div key={i} onClick={e => { e.stopPropagation(); setCurrent(i); }}
-                          style={{ width: '6px', height: '6px', borderRadius: '50%', background: i === current ? '#fff' : 'rgba(255,255,255,0.45)', cursor: 'pointer', transition: 'background 0.2s' }}
-                        />
+                          style={{ width: '6px', height: '6px', borderRadius: '50%', background: i === current ? '#fff' : 'rgba(255,255,255,0.45)', cursor: 'pointer', transition: 'background 0.2s' }} />
                       ))}
                     </div>
                   </>
@@ -91,7 +76,7 @@ export default function DetailModal({ item, onClose }) {
             )}
           </div>
 
-          {/* ── Modal body ── */}
+          {/* Modal body */}
           <div className="modal-body p-4">
 
             {/* Title + price */}
@@ -109,7 +94,7 @@ export default function DetailModal({ item, onClose }) {
               </div>
             </div>
 
-            {/* Tag pills — condition appended as an extra pill. */}
+            {/* Tag pills */}
             <div className="d-flex flex-wrap gap-2 mb-4">
               {item.tags.map(t => (
                 <span key={t} className="badge rounded-pill border" style={{ background: 'var(--sand)', color: 'var(--faint)', fontSize: '10px', fontWeight: 400 }}>{t}</span>
@@ -123,16 +108,11 @@ export default function DetailModal({ item, onClose }) {
               <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.8 }}>{item.description}</p>
             </div>
 
-            {/* Details grid — createdAt formatted for display. */}
+            {/* Details grid */}
             <div className="mb-4">
               <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>Details</div>
               <div className="row g-2">
-                {[
-                  ['Condition', item.condition],
-                  ['Category',  item.category],
-                  ['Status',    item.status],
-                  ['Posted',    formatDate(item.createdAt)],
-                ].map(([label, val]) => (
+                {[['Condition', item.condition], ['Category', item.category], ['Status', item.status], ['Posted', formatDate(item.createdAt)]].map(([label, val]) => (
                   <div key={label} className="col-6">
                     <div className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                       <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '9px', letterSpacing: '1px', color: 'var(--muted)' }}>{label}</div>
@@ -143,7 +123,7 @@ export default function DetailModal({ item, onClose }) {
               </div>
             </div>
 
-            {/* Seller — owner.name and owner.avgRating from the populated owner object. */}
+            {/* Seller */}
             <div className="mb-4">
               <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>Seller</div>
               <div className="d-flex align-items-center gap-3 p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
@@ -157,26 +137,38 @@ export default function DetailModal({ item, onClose }) {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="d-flex gap-2">
-              <a
-  href={`mailto:${item.owner.email}?subject=${encodeURIComponent(
-    `Interested in ${item.title}`
-  )}&body=${encodeURIComponent(
-    `Hi ${item.owner.name.split(' ')[0]}, I am interested in your listing for ${item.title} ($${item.price}). Is it still available?`
-  )}`}
-  className="btn btn-dark flex-grow-1 rounded-3 py-3 text-decoration-none text-center"
-  style={{
-    fontFamily: 'DM Sans, sans-serif',
-    fontSize: '14px',
-  }}
->
-  💬 Contact Seller
-</a>
-              <button className={`dm-btn-save${saved ? ' saved' : ''}`} onClick={() => toggleFavorite(item.id)}>
-                {saved ? '♥' : '♡'}
-              </button>
-            </div>
+            {/* Actions — context-specific */}
+            {mode === 'pending' && (
+              <div className="d-flex gap-2">
+                <button className="btn btn-dark flex-grow-1 rounded-3 py-3" style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }}
+                  onClick={() => { onConfirm(); onClose(); }}>
+                  ✅ Yes, I bought this
+                </button>
+                <button className="btn btn-outline-danger flex-grow-1 rounded-3 py-3" style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }}
+                  onClick={() => { onReject(); onClose(); }}>
+                  ❌ No, I didn't
+                </button>
+              </div>
+            )}
+
+            {mode === 'purchased' && (
+              <div>
+                {existing && (
+                  <div className="mb-3 p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
+                    <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '9px', letterSpacing: '1px', color: 'var(--muted)' }}>Your review</div>
+                    <span style={{ color: '#f59e0b', fontSize: '15px' }}>{'★'.repeat(existing.stars)}{'☆'.repeat(5 - existing.stars)}</span>
+                    {existing.comment && <p className="mb-0 mt-1" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', fontStyle: 'italic' }}>"{existing.comment}"</p>}
+                  </div>
+                )}
+                <button
+                  className="btn w-100 rounded-3 py-3 text-white fw-medium"
+                  style={{ background: '#18181b', fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }}
+                  onClick={() => { onReview(); onClose(); }}
+                >
+                  {existing ? '✏️ Edit review' : '⭐ Give review'}
+                </button>
+              </div>
+            )}
 
           </div>
         </div>
