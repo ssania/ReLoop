@@ -291,7 +291,7 @@ const housing = [
     name:          'Center East Commons',
     type:          'Apartments',
     description:   'A newer-feeling community on the edge of downtown Amherst, with standout transit access and the kind of walkability that makes car-free living much easier.\n\n🏠 The Community\nCenter East Commons appeals to students and young professionals who want to stay close to both campus and town. The buildings read more contemporary than many nearby options, and residents consistently point to the neighborhood itself as a major advantage.\n\n💡 What\'s Included\nThe property offers 2 Bed / 1 Bath apartments with updated utilities and appliances, plus the usual parking and laundry setup expected in this part of Amherst. The package is fairly simple, but the location does a lot of the heavy lifting.\n\n🚌 Getting Around\nAt roughly 0.8 mi from UMass, the property is walkable to campus and even more convenient for reaching downtown. Route 30 is close by, while Routes 31, 33, and B43 are easy to catch from downtown, giving this community some of the best transit flexibility in the dataset. That convenience is why residents rate the commute around 5/5.\n\n✅ Good To Know\nMonthly rent runs from about $1,800 to $2,250, and private bedrooms usually end up costing over $1,000 per person. Most units house two or three people. Overall satisfaction lands around 4/5, with the strongest positives being the neighborhood, downtown access, and updated systems; the main caution is nearby rail noise for light sleepers.',
-    distance:      0.8,
+    distance:      1.3,
     rentMin:       1800,
     rentMax:       2250,
     amenities:     ['New utilities', 'Walk to downtown', 'Good neighborhood', 'Near dining & shopping'],
