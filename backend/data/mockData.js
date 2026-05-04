@@ -18,7 +18,6 @@ const housing = [
     floorPlans:    [
       { layout: '1 Bed / 1 Bath', sqft: 700,  description: 'Comfortable single-occupancy layout with open kitchen and a private balcony or patio.', imageUrl: '', imageKey: '' },
       { layout: '2 Bed / 2 Bath', sqft: 1050, description: 'Shared-living layout with two private full baths — popular with grad students and roommates.',     imageUrl: '', imageKey: '' },
-      { layout: '3 Bed / 2 Bath', sqft: 1300, description: 'Group-friendly layout with a large common area, ideal for three roommates splitting rent.',        imageUrl: '', imageKey: '' },
     ],
     coordinates:   { lat: 42.3680, lng: -72.5280 },
     mapEmbedUrl:   '',
