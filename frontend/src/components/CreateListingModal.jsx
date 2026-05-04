@@ -19,14 +19,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { EMOJI } from '../data/constants';
 
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
 const CATEGORIES = ['Furniture', 'Textbooks', 'Electronics', 'Clothing', 'Appliances', 'Sports', 'Other'];
+  
 
 export default function CreateListingModal({ onClose, redirectTo }) {
   const { addListing, showToast } = useApp();
+  const { token } = useAuth();
   const navigate = useNavigate();
+  const [images, setImages] = useState([]);
 
   // Controlled form state.
   const [title, setTitle]             = useState('');
@@ -41,35 +45,49 @@ export default function CreateListingModal({ onClose, redirectTo }) {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  function submit() {
-    // Basic validation – title and price are the minimum required fields.
-    if (!title.trim() || !price) {
-      showToast('Please fill in title & price', '⚠️');
-      return;
-    }
+  async function submit() {
+  if (!title.trim() || !price) {
+    showToast('Please fill in title & price', '⚠️');
+    return;
+  }
 
-    // Build the new listing object matching the schema shape exactly.
-    // owner mirrors the populated User object returned by MongoDB populate().
+  try {
+    const formData = new FormData();
+
+    formData.append('title', title.trim());
+    formData.append('description', description || 'No description provided.');
+    formData.append('category', category);
+    formData.append('price', +price);
+    formData.append('condition', condition);
+    formData.append('status', 'Available');
+
+    // ✅ Add images
+    images.forEach(img => formData.append('images', img));
+
+    const res = await fetch('http://localhost:5002/api/listings', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+
+    if (!res.ok) throw new Error('Failed to create listing');
+
+    const newListing = await res.json();
+
     addListing({
-      id:          Date.now(),                        // temporary; MongoDB will assign _id
-      owner:       { name: 'John Doe', avgRating: 5.0 }, // hardcoded until auth is implemented
-      title:       title.trim(),
-      description: description || 'No description provided.',
-      category,
-      price:       +price,
-      condition,
-      status:      'Available',                       // all new listings start as Available
-      imageUrls:   [],                                // populated when S3 upload is wired up
-      tags:        [category, condition],
-      createdAt:   new Date().toISOString(),          // mirrors MongoDB timestamps.createdAt
-      emoji:       EMOJI[category] || '📦',          // frontend-only placeholder
-      ownedByUser: true,                              // frontend-only flag for Profile tab
+      ...newListing,
+      emoji: EMOJI[category] || '📦',
     });
 
     showToast('Listing posted!', '🎉');
     onClose();
     if (redirectTo) navigate(redirectTo);
+
+  } catch (err) {
+    console.error(err);
+    showToast('Could not post listing. Try again.', '❌');
   }
+}
 
   return (
     // Backdrop – clicking outside the dialog closes the modal.
@@ -131,14 +149,29 @@ export default function CreateListingModal({ onClose, redirectTo }) {
                 placeholder="Describe the item – condition details, dimensions, why you're selling..." />
             </div>
 
-            {/* Photo upload zone – UI only; upload functionality pending backend. */}
-            <div>
-              <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Photos</label>
-              <div className="upload-zone">
-                <div style={{ fontSize: '24px', marginBottom: '6px' }}>📷</div>
-                <div style={{ fontSize: '12px', fontWeight: 300, color: 'var(--muted)' }}>Click to upload · JPG or PNG · up to 10MB</div>
-              </div>
-            </div>
+            {/* Photo upload */}
+<div>
+  <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>
+    Photos (up to 5)
+  </label>
+  <input
+    type="file"
+    className="form-control"
+    accept="image/*"
+    multiple
+    onChange={e => setImages(Array.from(e.target.files))}
+  />
+  {/* Preview selected images */}
+  {images.length > 0 && (
+    <div className="d-flex flex-wrap gap-2 mt-2">
+      {images.map((img, i) => (
+        <div key={i} style={{ fontSize: '12px', color: 'var(--muted)' }}>
+          📷 {img.name}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
             {/* Submit button – calls submit() which validates, adds listing, and closes. */}
             <button className="btn btn-dark w-100 rounded-3 py-3" style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }} onClick={submit}>

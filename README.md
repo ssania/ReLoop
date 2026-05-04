@@ -41,10 +41,11 @@ cd ReLoop
 ```bash
 cd backend
 npm install
+node seed.js
 npm run dev
 ```
 
-The API will be available at `http://localhost:5002`.
+Run `node seed.js` once to populate MongoDB with mock users and listings before starting the server. The API will be available at `http://localhost:5002`.
 
 ### 3. Start the frontend
 
@@ -57,8 +58,6 @@ npm run dev
 ```
 
 The app will be available at `http://localhost:5173`.
-
-> The app runs on mock data by default — no database or external credentials needed.
 
 ---
 

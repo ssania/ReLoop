@@ -10,19 +10,66 @@
 // Body-scroll lock and backdrop-click-to-close follow the same pattern as
 // DetailModal (see that file for the explanation).
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Home, Package, Bus, Compass, Phone, Mail, Globe, MapPin } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../data/constants';
+import HousingImageCarousel from './HousingImageCarousel';
 
 export default function HousingDetailModal({ h, onClose }) {
-  // showToast is used for the "Contact area managers" button at the bottom.
-  const { showToast } = useApp();
+  const { showToast, addHousingReview, editHousingReview, deleteHousingReview } = useApp();
+  const { user } = useAuth();
 
-  // Lock body scroll while modal is open; restore on unmount.
+  const userReview = user ? h.housingReviews.find(r => r.reviewerId === user.id) ?? null : null;
+
+  const [stars, setStars] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // editingId: review id currently being edited, null when not editing.
+  const [editingId, setEditingId] = useState(null);
+  const [editStars, setEditStars] = useState(5);
+  const [editComment, setEditComment] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (submitting) return;
+    if (!stars) { showToast('Select a star rating first', '⭐'); return; }
+    if (!comment.trim()) { showToast('Add a short comment first', '✏️'); return; }
+    setSubmitting(true);
+    const ok = await addHousingReview(h.id, { stars, comment: comment.trim() });
+    setSubmitting(false);
+    if (ok) { setStars(0); setComment(''); }
+  };
+
+  const startEdit = (r) => {
+    setEditingId(r.id);
+    setEditStars(r.stars);
+    setEditComment(r.comment);
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const handleEditSubmit = async (e, reviewId) => {
+    e.preventDefault();
+    if (editSubmitting) return;
+    if (!editComment.trim()) { showToast('Comment cannot be empty', '✏️'); return; }
+    setEditSubmitting(true);
+    const ok = await editHousingReview(h.id, reviewId, { stars: editStars, comment: editComment.trim() });
+    setEditSubmitting(false);
+    if (ok) setEditingId(null);
+  };
+
+  const handleDelete = async (reviewId) => {
+    await deleteHousingReview(h.id, reviewId);
+  };
 
   return (
     // Backdrop – click outside the modal dialog to close.
@@ -30,20 +77,26 @@ export default function HousingDetailModal({ h, onClose }) {
       style={{ background: 'rgba(24,24,27,.55)', backdropFilter: 'blur(4px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
 
-      <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div className="modal-content rounded-4 position-relative overflow-hidden">
 
           {/* Floating close button. */}
           <button className="dm-close" onClick={onClose}>✕</button>
 
-          {/* ── Hero image area ── */}
-          <div className="d-flex align-items-center justify-content-center overflow-hidden"
-            style={{ height: 'clamp(160px,28vw,240px)', background: 'linear-gradient(135deg,#e8f0f5,#ccdcec)', borderRadius: '1rem 1rem 0 0' }}>
-            <div style={{ fontSize: 'clamp(3rem,8vw,5rem)' }}>{h.emoji}</div>
-          </div>
-
           {/* ── Modal body ── */}
           <div className="modal-body p-4">
+
+            {/* Hero carousel lives inside the scrollable body so it scrolls
+                away with the rest of the content instead of staying pinned. */}
+            <div className="mb-4" style={{ margin: '-1.5rem -1.5rem 1.5rem' }}>
+              <HousingImageCarousel
+                h={h}
+                showControls
+                showDots
+                roundedTop
+                variant="detail"
+              />
+            </div>
 
             {/* Kicker row – type + "Housing Hub" label with sage dot. */}
             <div className="d-flex align-items-center gap-2 mb-2 text-uppercase fw-semibold" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--sage)' }}>
@@ -58,15 +111,15 @@ export default function HousingDetailModal({ h, onClose }) {
             </div>
             <p className="mb-4" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--muted)' }}>Typical monthly rent range in this area</p>
 
-            {/* About – full neighbourhood description paragraph. */}
+            {/* About – monochrome timeline with stroked icons. */}
             <Section title="About this area">
-              <p style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.8 }}>{h.description}</p>
+              <AboutCards description={h.description} />
             </Section>
 
             {/* Key info – 4 stat tiles in a 2-column Bootstrap grid. */}
             <Section title="Key info">
               <div className="row g-2">
-                {[['Distance', h.distance], ['Rent range', `$${h.rentMin.toLocaleString()} – $${h.rentMax.toLocaleString()}/mo`], ['Area rating', `⭐ ${h.averageRating.toFixed(1)} (${h.reviewCount} reviews)`], ['Typical type', h.type]].map(([label, val]) => (
+                {[['Distance', `${h.distance} mi from campus`], ['Rent range', `$${h.rentMin.toLocaleString()} – $${h.rentMax.toLocaleString()}/mo`], ['Area rating', h.reviewCount > 0 ? `⭐ ${h.averageRating.toFixed(1)} (${h.reviewCount} review${h.reviewCount === 1 ? '' : 's'})` : 'No reviews yet'], ['Typical type', h.type]].map(([label, val]) => (
                   <div key={label} className="col-6">
                     <div className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                       <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '9px', letterSpacing: '1px', color: 'var(--muted)' }}>{label}</div>
@@ -77,15 +130,32 @@ export default function HousingDetailModal({ h, onClose }) {
               </div>
             </Section>
 
-            {/* Floor plans – renders S3 images when available; placeholder shown until images are uploaded. */}
+            {/* Floor plans – each plan: image (or placeholder) + layout badge + sqft + description. */}
             <Section title="Floor plans available">
-              <div className="row g-2">
-                {h.floorPlanUrls.map(fp => (
-                  <div key={fp.key} className="col-12 col-sm-6">
-                    {/* TODO: replace placeholder with <img src={fp.url} /> once floor plan images are uploaded to S3 */}
-                    <div className="p-3 rounded-3 d-flex align-items-center justify-content-center"
-                      style={{ background: 'var(--sand)', border: '1px solid var(--sand3)', height: '100px' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--muted)' }}>🖼️ Floor plan image</span>
+              <div className="row g-3">
+                {(h.floorPlans ?? []).map((fp, i) => (
+                  <div key={i} className="col-12 col-sm-6">
+                    <div className="rounded-3 overflow-hidden h-100 d-flex flex-column" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
+                      {/* Image – real <img> when imageUrl is set, placeholder otherwise. */}
+                      {fp.imageUrl ? (
+                        <img src={fp.imageUrl} alt={`${fp.layout} floor plan`} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                      ) : (
+                        <div className="d-flex align-items-center justify-content-center" style={{ height: '140px', background: 'linear-gradient(135deg,#f0ebe0,#e5dcc8)' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--muted)' }}>🖼️ Floor plan image coming soon</span>
+                        </div>
+                      )}
+                      {/* Body – layout label + sqft badge + description. */}
+                      <div className="p-3 d-flex flex-column flex-grow-1">
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                          <span className="fw-semibold" style={{ fontSize: '13px', fontFamily: 'Syne,sans-serif', letterSpacing: '-.3px' }}>{fp.layout}</span>
+                          {fp.sqft != null && (
+                            <span className="badge rounded-pill px-2 py-1" style={{ background: 'var(--sage-bg)', color: 'var(--sage)', border: '1px solid var(--sage-bd)', fontWeight: 600, fontSize: '10px' }}>{fp.sqft.toLocaleString()} ft²</span>
+                          )}
+                        </div>
+                        {fp.description && (
+                          <p className="mb-0" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.6 }}>{fp.description}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -110,36 +180,143 @@ export default function HousingDetailModal({ h, onClose }) {
               </div>
             </Section>
 
-            {/* Map placeholder – will be replaced by a real Google Maps embed.
-                Two .hdm-map-pin elements represent the neighbourhood and UMass campus. */}
             <Section title="Location map">
-              <div className="rounded-3 position-relative d-flex align-items-center justify-content-center overflow-hidden"
-                style={{ background: 'linear-gradient(135deg,#e8f0e8,#d0e0d0)', height: '180px', border: '1px solid var(--sage-bd)' }}>
-                {/* Neighbourhood pin (terra/orange). */}
-                <div className="hdm-map-pin"></div>
-                {/* UMass campus pin (sage/green). */}
-                <div className="hdm-map-pin umass" style={{ top: '62%', left: '62%' }}></div>
-                <div className="px-3 py-2 rounded-2 fw-medium" style={{ background: 'rgba(255,255,255,.8)', fontSize: '11px', color: 'var(--sage)', marginTop: '80px' }}>
-                  📍 {h.name} · 🎓 UMass Campus
+              {h.mapEmbedUrl ? (
+                <div className="rounded-3 overflow-hidden" style={{ border: '1px solid var(--sage-bd)', height: 'clamp(220px, 40vw, 420px)' }}>
+                  <iframe
+                    src={h.mapEmbedUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title={`Map for ${h.name}`}
+                  />
                 </div>
-              </div>
-              <p className="mt-2 mb-0" style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 300 }}>Full interactive map with Google Maps integration coming in the live version.</p>
+              ) : (
+                <div className="rounded-3 position-relative d-flex align-items-center justify-content-center overflow-hidden"
+                  style={{ background: 'linear-gradient(135deg,#e8f0e8,#d0e0d0)', height: '180px', border: '1px solid var(--sage-bd)' }}>
+                  <div className="hdm-map-pin"></div>
+                  <div className="hdm-map-pin umass" style={{ top: '62%', left: '62%' }}></div>
+                  <div className="px-3 py-2 rounded-2 fw-medium" style={{ background: 'rgba(255,255,255,.8)', fontSize: '11px', color: 'var(--sage)', marginTop: '80px' }}>
+                    📍 {h.name} · 🎓 UMass Campus
+                  </div>
+                </div>
+              )}
             </Section>
 
             {/* Student reviews – pulled from h.housingReviews. */}
             <Section title="Student reviews">
               <div className="d-flex flex-column gap-2">
-                {h.housingReviews.map((r, i) => (
-                  <div key={i} className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <span className="fw-medium" style={{ fontSize: '12px' }}>{r.reviewer.name}</span>
-                      <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{formatDate(r.createdAt)} · {'⭐'.repeat(r.stars)}</span>
+                {h.housingReviews.map((r, i) => {
+                  const isOwn = user && r.reviewerId === user.id;
+                  const isEditing = editingId === r.id;
+                  return (
+                    <div key={r.id ?? i} className="p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
+                      {isEditing ? (
+                        <form onSubmit={e => handleEditSubmit(e, r.id)}>
+                          <StarPicker stars={editStars} setStars={setEditStars} />
+                          <textarea
+                            value={editComment}
+                            onChange={e => setEditComment(e.target.value)}
+                            rows={3}
+                            maxLength={500}
+                            className="form-control mb-2"
+                            style={{ fontSize: '12px', fontWeight: 300, resize: 'vertical' }}
+                          />
+                          <div className="d-flex gap-2 justify-content-end">
+                            <button type="button" onClick={cancelEdit} className="btn btn-sm rounded-3" style={{ fontSize: '12px' }}>Cancel</button>
+                            <button type="submit" disabled={editSubmitting} className="btn btn-sm rounded-3 text-white fw-medium" style={{ background: 'var(--sage)', fontSize: '12px', opacity: editSubmitting ? 0.7 : 1 }}>
+                              {editSubmitting ? 'Saving…' : 'Save'}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          <div className="d-flex align-items-center justify-content-between mb-2">
+                            <span className="fw-medium" style={{ fontSize: '12px' }}>{r.reviewer.name}</span>
+                            <div className="d-flex align-items-center gap-2">
+                              <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{formatDate(r.createdAt)} · {'⭐'.repeat(r.stars)}</span>
+                              {isOwn && (
+                                <>
+                                  <button onClick={() => startEdit(r)} className="btn p-0" style={{ fontSize: '11px', color: 'var(--sage)', border: 'none', background: 'transparent' }}>Edit</button>
+                                  <button onClick={() => handleDelete(r.id)} className="btn p-0" style={{ fontSize: '11px', color: 'var(--terra)', border: 'none', background: 'transparent' }}>Delete</button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <p className="mb-0" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.6 }}>{r.comment}</p>
+                        </>
+                      )}
                     </div>
-                    <p className="mb-0" style={{ fontSize: '12px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.6 }}>{r.comment}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+
+              {/* Review form — logged out: prompt to log in.
+                  Logged in + already reviewed: nothing (edit/delete on their card above).
+                  Logged in + no review yet: show the form. */}
+              {!user ? (
+                <div className="p-3 rounded-3 mt-2 text-center" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)', fontSize: '12px', color: 'var(--muted)' }}>
+                  <a href="/login" style={{ color: 'var(--sage)', textDecoration: 'none', fontWeight: 500 }}>Log in</a> to leave a review.
+                </div>
+              ) : !userReview ? (
+                <form onSubmit={handleSubmit} className="p-3 rounded-3 mt-2" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
+                  <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>
+                    Leave a review as {user.name}
+                  </div>
+                  <StarPicker stars={stars} setStars={setStars} />
+                  <textarea
+                    value={comment}
+                    onChange={e => setComment(e.target.value)}
+                    placeholder="Share what it's like to live here…"
+                    rows={3}
+                    maxLength={500}
+                    className="form-control mb-2"
+                    style={{ fontSize: '12px', fontWeight: 300, resize: 'vertical' }}
+                  />
+                  <div className="d-flex align-items-center justify-content-between">
+                    <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{comment.length}/500</span>
+                    <button type="submit" disabled={submitting} className="btn rounded-3 fw-medium text-white" style={{ background: 'var(--sage)', fontSize: '12px', padding: '6px 16px', opacity: submitting ? 0.7 : 1 }}>
+                      {submitting ? 'Posting…' : 'Post review'}
+                    </button>
+                  </div>
+                </form>
+              ) : null}
             </Section>
+
+            {/* Contact – only renders rows for populated fields; the whole section is skipped if all are empty. */}
+            {h.contact && (h.contact.phone || h.contact.email || h.contact.website || h.contact.address) && (
+              <Section title="Contact">
+                <div className="d-flex flex-column gap-2">
+                  {h.contact.phone && (
+                    <a href={`tel:${h.contact.phone.replace(/\s/g, '')}`} className="d-flex align-items-center gap-2 text-decoration-none" style={{ color: 'var(--ink)' }}>
+                      <Phone size={15} strokeWidth={1.75} color="var(--sage)" />
+                      <span style={{ fontSize: '13px' }}>{h.contact.phone}</span>
+                    </a>
+                  )}
+                  {h.contact.email && (
+                    <a href={`mailto:${h.contact.email}`} className="d-flex align-items-center gap-2 text-decoration-none" style={{ color: 'var(--ink)' }}>
+                      <Mail size={15} strokeWidth={1.75} color="var(--sage)" />
+                      <span style={{ fontSize: '13px' }}>{h.contact.email}</span>
+                    </a>
+                  )}
+                  {h.contact.website && (
+                    <a href={h.contact.website} target="_blank" rel="noopener noreferrer" className="d-flex align-items-center gap-2 text-decoration-none" style={{ color: 'var(--ink)' }}>
+                      <Globe size={15} strokeWidth={1.75} color="var(--sage)" />
+                      <span style={{ fontSize: '13px' }}>{h.contact.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                    </a>
+                  )}
+                  {h.contact.address && (
+                    <div className="d-flex align-items-start gap-2" style={{ color: 'var(--faint)' }}>
+                      <MapPin size={15} strokeWidth={1.75} color="var(--sage)" style={{ marginTop: '2px', flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', lineHeight: 1.5 }}>{h.contact.address}</span>
+                    </div>
+                  )}
+                </div>
+              </Section>
+            )}
 
             {/* CTA – fires a toast to simulate sending a contact request. */}
             <button
@@ -156,14 +333,102 @@ export default function HousingDetailModal({ h, onClose }) {
   );
 }
 
-// Section: local layout helper to avoid repeating the label + children wrapper
-// for each of the modal's content blocks (About, Key info, Floor plans, etc.).
+function StarPicker({ stars, setStars }) {
+  return (
+    <div className="d-flex align-items-center gap-1 mb-2" role="radiogroup" aria-label="Rating">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={stars === n}
+          aria-label={`${n} star${n === 1 ? '' : 's'}`}
+          onClick={() => setStars(n)}
+          className="btn p-0"
+          style={{ fontSize: '18px', lineHeight: 1, opacity: n <= stars ? 1 : 0.3, background: 'transparent', border: 'none' }}
+        >⭐</button>
+      ))}
+      <span className="ms-2" style={{ fontSize: '11px', color: 'var(--muted)' }}>{stars}/5</span>
+    </div>
+  );
+}
+
 function Section({ title, children }) {
   return (
     <div className="mb-4">
       {/* Section heading – small uppercase label consistent with the app's style. */}
       <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>{title}</div>
       {children}
+    </div>
+  );
+}
+
+// AboutCards: parses the structured description string and renders it as clean
+// stacked sections with stroked lucide icons. Each section picks up a subtle
+// accent colour from the site palette (sage/terra/sand) so the layout reads
+// as designed rather than monochrome-dull.
+// Description format (see mockData.js):
+//   "[opening summary]\n\n🏠 The Community\n[body]\n\n💡 What's Included\n[body]..."
+const SECTION_META = {
+  '🏠': { Icon: Home,    accent: 'var(--sage)'   },
+  '💡': { Icon: Package, accent: 'var(--terra)'  },
+  '🚌': { Icon: Bus,     accent: 'var(--terra)'  },
+  '✅': { Icon: Compass, accent: 'var(--sage)'   },
+};
+
+function AboutCards({ description }) {
+  const blocks = (description || '').split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+  if (!blocks.length) return null;
+
+  const sections = [];
+  let lede = null;
+  for (const block of blocks) {
+    const firstLine = block.split('\n')[0];
+    const emojiMatch = firstLine.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s+(.+)$/u);
+    if (emojiMatch) {
+      const [, emoji, title] = emojiMatch;
+      const body = block.split('\n').slice(1).join('\n').trim();
+      sections.push({ emoji, title, body });
+    } else if (!sections.length) {
+      lede = lede ? `${lede}\n\n${block}` : block;
+    }
+  }
+
+  if (!sections.length) {
+    return <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.8, whiteSpace: 'pre-line' }}>{description}</p>;
+  }
+
+  return (
+    <div>
+      {lede && (
+        <p className="mb-4" style={{ fontSize: '14.5px', fontWeight: 400, color: 'var(--ink)', lineHeight: 1.65, letterSpacing: '-.1px' }}>{lede}</p>
+      )}
+      {/* Clean stacked sections with palette-synced accents and soft hairline dividers. */}
+      <div>
+        {sections.map((s, i) => {
+          const meta = SECTION_META[s.emoji] ?? { Icon: Compass, accent: 'var(--ink)' };
+          const { Icon, accent } = meta;
+          const isLast = i === sections.length - 1;
+          return (
+            <div key={i}
+              style={{
+                paddingBottom: isLast ? 0 : 'clamp(18px, 3vw, 24px)',
+                marginBottom:  isLast ? 0 : 'clamp(18px, 3vw, 24px)',
+                borderBottom:  isLast ? 'none' : '1px solid var(--sand3)',
+              }}>
+              {/* Icon + title row – icon and eyebrow text share the section accent colour. */}
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <Icon size={16} strokeWidth={1.75} color={accent} />
+                <span className="text-uppercase fw-semibold" style={{ fontSize: '10.5px', letterSpacing: '1.8px', color: accent }}>
+                  {s.title}
+                </span>
+              </div>
+              {/* Body paragraph */}
+              <p className="mb-0" style={{ fontSize: 'clamp(12.5px, 2.5vw, 13.5px)', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.75 }}>{s.body}</p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
