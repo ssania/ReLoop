@@ -295,7 +295,7 @@ const housing = [
     rentMin:       1800,
     rentMax:       2375,
     amenities:     ['New utilities', 'Walk to downtown', 'Good neighborhood', 'Near dining & shopping'],
-    busRoutes:     ['PVTA #30', 'PVTA #31', 'PVTA #33', 'PVTA B43'],
+    busRoutes:     ['PVTA #30'],
     imageUrls:     [],
     floorPlans:    [
       { layout: '2 Bed / 1 Bath', sqft: 900, description: 'Updated two-bedroom apartment designed for a pair of roommates who want easy access to both campus and downtown.', imageUrl: '', imageKey: '' },
