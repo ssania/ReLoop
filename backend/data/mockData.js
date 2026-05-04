@@ -23,7 +23,7 @@ const housing = [
     mapEmbedUrl:   '',
     averageRating: 0,
     reviewCount:   0,
-    contact:       { phone: '413-256-6061', email: '', website: '', address: '' },
+    contact:       { phone: '413-256-6061', email: '', website: 'https://www.hawkinsmeadow.com/', address: '' },
     housingReviews: [],
   },
   {
