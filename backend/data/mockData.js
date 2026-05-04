@@ -298,7 +298,6 @@ const housing = [
     busRoutes:     ['PVTA #30'],
     imageUrls:     [],
     floorPlans:    [
-      { layout: '2 Bed / 1 Bath', sqft: 900, description: 'Updated two-bedroom apartment designed for a pair of roommates who want easy access to both campus and downtown.', imageUrl: '', imageKey: '' },
     ],
     coordinates:   { lat: 42.3760, lng: -72.5180 },
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1nhQNS4-i1jaVpir4fH7zB9N7tAUets0&ehbc=2E312F',
