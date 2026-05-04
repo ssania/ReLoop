@@ -260,7 +260,7 @@ const housing = [
     mapEmbedUrl:   'https://www.google.com/maps/d/u/2/embed?mid=1xaRSGiSMVgxK0grtUSr_-4hwNnbXwxs&ehbc=2E312F',
     averageRating: 0,
     reviewCount:   0,
-    contact:       { phone: '413-253-2515', email: '', website: 'https://kaminsrealestate.com/rental/presidential-apartments-1-bedroom-hhw/', address: '' },
+    contact:       { phone: '413-253-2515', email: '', website: 'https://kaminsrealestate.com/rental/presidential-apartments-1-bedroom-hhw/', address: '950 North Pleasant Street, Amherst MA 01002' },
     housingReviews: [],
   },
   {
