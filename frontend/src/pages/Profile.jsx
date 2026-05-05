@@ -19,7 +19,7 @@ import ReviewModal from '../components/ReviewModal';
 import { formatDate } from '../data/constants';
 import CreateListingModal from '../components/CreateListingModal';
 
-const API = 'http://localhost:5002/api';
+const API = import.meta.env.VITE_API_URL;
 
 // Inline confirmation modal — shown before permanently deleting a listing.
 function DeleteConfirmModal({ item, onConfirm, onCancel }) {

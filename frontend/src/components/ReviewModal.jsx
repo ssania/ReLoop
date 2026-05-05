@@ -11,7 +11,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'http://localhost:5002/api';
+const API = import.meta.env.VITE_API_URL;
 
 export default function ReviewModal({ listing, existing, onClose, onSaved, onDeleted }) {
   const { token } = useAuth();

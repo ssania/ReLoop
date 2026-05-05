@@ -44,10 +44,18 @@ app.get("/test-500", (req, res) => {
   res.status(500).send("Test 500 error");
 });
 
-// Health-check endpoint
-app.get('/', (req, res) => {
-  res.json({ message: 'ReLoop API is running' });
-});
+// ── Serve frontend in production ───────────────────────────────────────────────
+const path = require('path');
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({ message: 'ReLoop API is running' });
+  });
+}
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
