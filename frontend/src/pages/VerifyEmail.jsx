@@ -25,14 +25,14 @@ export default function VerifyEmail() {
     // Navigate the browser directly to the backend verify URL.
     // The backend marks verified=true then redirects to /login?verified=true.
     // Using window.location lets the browser follow the redirect natively.
-    fetch(`http://localhost:5002/api/auth/verify/${token}`, { redirect: 'manual' })
+    fetch(`${import.meta.env.VITE_API_URL}/auth/verify/${token}`, { redirect: 'manual' })
       .then(res => {
         console.log('Verify response status:', res.status, 'type:', res.type, 'redirected:', res.redirected);
         // status 0 = opaqueredirect (backend sent a redirect) = success
         // status 200 = followed redirect = success
         // anything else = error
         if (res.type === 'opaqueredirect' || res.ok || res.redirected) {
-          window.location.href = 'http://localhost:5173/login?verified=true';
+          window.location.href = `${import.meta.env.VITE_FRONTEND_URL}/login?verified=true`;
         } else {
           setStatus('error');
         }

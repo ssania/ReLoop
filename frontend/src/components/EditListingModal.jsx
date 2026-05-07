@@ -15,7 +15,7 @@ const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
 const CATEGORIES = ['Furniture', 'Textbooks', 'Electronics', 'Clothing', 'Appliances', 'Sports', 'Other'];
 const STATUSES   = ['Available', 'In-talk', 'Sold'];
 
-const API = 'http://localhost:5002/api';
+const API = import.meta.env.VITE_API_URL;
 
 export default function EditListingModal({ item, onClose }) {
   const { updateListing, showToast } = useApp();

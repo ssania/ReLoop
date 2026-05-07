@@ -64,7 +64,7 @@ export default function CreateListingModal({ onClose, redirectTo }) {
     // ✅ Add images
     images.forEach(img => formData.append('images', img));
 
-    const res = await fetch('http://localhost:5002/api/listings', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/listings`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData
