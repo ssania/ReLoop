@@ -15,7 +15,7 @@ const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
 const CATEGORIES = ['Furniture', 'Textbooks', 'Electronics', 'Clothing', 'Appliances', 'Sports', 'Other'];
 const STATUSES   = ['Available', 'In-talk', 'Sold'];
 
-const API = 'http://localhost:5002/api';
+const API = import.meta.env.VITE_API_URL;
 
 export default function EditListingModal({ item, onClose }) {
   const { updateListing, showToast } = useApp();
@@ -30,10 +30,44 @@ export default function EditListingModal({ item, onClose }) {
   const [buyerEmail, setBuyerEmail] = useState('');
   const [loading, setLoading]       = useState(false);
 
+  // Existing images — starts from what the listing currently has
+  const [existingImages, setExistingImages] = useState(item.imageUrls || []);
+  // Keys of existing images the seller wants removed
+  const [removeKeys, setRemoveKeys]         = useState([]);
+  // New image files selected by the seller
+  const [newFiles, setNewFiles]             = useState([]);
+  // Preview URLs for newly selected files
+  const [newPreviews, setNewPreviews]       = useState([]);
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
+
+  function handleNewFiles(e) {
+    const files = Array.from(e.target.files);
+    const total = existingImages.length - removeKeys.length + newFiles.length + files.length;
+    if (total > 5) {
+      showToast('Maximum 5 images per listing', '⚠️');
+      return;
+    }
+    setNewFiles(prev => [...prev, ...files]);
+    setNewPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
+    e.target.value = '';
+  }
+
+  function removeExisting(key) {
+    setRemoveKeys(prev => [...prev, key]);
+  }
+
+  function removeNew(index) {
+    URL.revokeObjectURL(newPreviews[index]);
+    setNewFiles(prev => prev.filter((_, i) => i !== index));
+    setNewPreviews(prev => prev.filter((_, i) => i !== index));
+  }
+
+  const visibleExisting = existingImages.filter(img => !removeKeys.includes(img.key));
+  const totalImages = visibleExisting.length + newFiles.length;
 
   async function save() {
     if (!title.trim() || !price) {
@@ -41,52 +75,62 @@ export default function EditListingModal({ item, onClose }) {
       return;
     }
 
-    // When seller picks Sold, nominate a buyer instead of a plain update
-    if (status === 'Sold') {
-      if (!buyerEmail.trim()) {
-        showToast('Enter the buyer\'s ReLoop email to mark as Sold', '⚠️');
-        return;
-      }
-      setLoading(true);
-      try {
-        const res = await fetch(`${API}/listings/${item.id}/nominate`, {
+    setLoading(true);
+    try {
+      // When seller picks Sold, nominate a buyer first
+      if (status === 'Sold') {
+        if (!buyerEmail.trim()) {
+          showToast('Enter the buyer\'s ReLoop email to mark as Sold', '⚠️');
+          setLoading(false);
+          return;
+        }
+        const nomRes = await fetch(`${API}/listings/${item.id}/nominate`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ buyerEmail: buyerEmail.trim() }),
         });
-        const data = await res.json();
-        if (!res.ok) {
-          showToast(data.message || 'Could not nominate buyer', '⚠️');
+        const nomData = await nomRes.json();
+        if (!nomRes.ok) {
+          showToast(nomData.message || 'Could not nominate buyer', '⚠️');
+          setLoading(false);
           return;
         }
-        // Also update the other fields via the normal update
-        await updateListing(item.id, {
-          title: title.trim(), category, price: +price,
-          condition, description: description || 'No description provided.',
-          tags: [category, condition],
-        });
-        showToast('Buyer notified — awaiting their confirmation', '📧');
-        onClose();
-      } catch {
-        showToast('Could not nominate buyer', '⚠️');
-      } finally {
-        setLoading(false);
       }
-      return;
+
+      // Send update as multipart so new images can be included
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('category', category);
+      formData.append('price', +price);
+      formData.append('condition', condition);
+      formData.append('status', status);
+      formData.append('description', description || 'No description provided.');
+      formData.append('tags', JSON.stringify([category, condition]));
+
+      if (removeKeys.length > 0) {
+        formData.append('removeImageKeys', JSON.stringify(removeKeys));
+      }
+      newFiles.forEach(f => formData.append('images', f));
+
+      const res = await fetch(`${API}/listings/${item.id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.message || 'Could not update listing', '⚠️');
+        return;
+      }
+
+      updateListing(item.id, data);
+      showToast(status === 'Sold' ? 'Buyer notified — awaiting their confirmation' : 'Listing updated!', status === 'Sold' ? '📧' : '✏️');
+      onClose();
+    } catch {
+      showToast('Could not update listing', '⚠️');
+    } finally {
+      setLoading(false);
     }
-
-    updateListing(item.id, {
-      title: title.trim(),
-      category,
-      price: +price,
-      condition,
-      status,
-      description: description || 'No description provided.',
-      tags: [category, condition],
-    });
-
-    showToast('Listing updated!', '✏️');
-    onClose();
   }
 
   return (
@@ -173,6 +217,73 @@ export default function EditListingModal({ item, onClose }) {
               <textarea className="form-control" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
             </div>
 
+            {/* Photos */}
+            <div>
+              <label className="form-label text-uppercase fw-semibold d-flex justify-content-between" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>
+                <span>Photos</span>
+                <span>{totalImages} / 5</span>
+              </label>
+
+              <div className="d-flex flex-wrap gap-2">
+                {/* Existing images */}
+                {visibleExisting.map(img => (
+                  <div key={img.key} style={{ position: 'relative', width: 80, height: 80 }}>
+                    <img
+                      src={img.url}
+                      alt=""
+                      style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeExisting(img.key)}
+                      style={{
+                        position: 'absolute', top: -6, right: -6,
+                        width: 20, height: 20, borderRadius: '50%',
+                        background: '#ef4444', color: '#fff', border: 'none',
+                        fontSize: 12, lineHeight: '20px', textAlign: 'center',
+                        cursor: 'pointer', padding: 0,
+                      }}
+                    >×</button>
+                  </div>
+                ))}
+
+                {/* New image previews */}
+                {newPreviews.map((src, i) => (
+                  <div key={i} style={{ position: 'relative', width: 80, height: 80 }}>
+                    <img
+                      src={src}
+                      alt=""
+                      style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeNew(i)}
+                      style={{
+                        position: 'absolute', top: -6, right: -6,
+                        width: 20, height: 20, borderRadius: '50%',
+                        background: '#ef4444', color: '#fff', border: 'none',
+                        fontSize: 12, lineHeight: '20px', textAlign: 'center',
+                        cursor: 'pointer', padding: 0,
+                      }}
+                    >×</button>
+                  </div>
+                ))}
+
+                {/* Add photos button */}
+                {totalImages < 5 && (
+                  <label style={{
+                    width: 80, height: 80, borderRadius: 8,
+                    border: '2px dashed #d1d5db', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', color: '#9ca3af', fontSize: 24,
+                  }}>
+                    +
+                    <input type="file" accept="image/*" multiple hidden onChange={handleNewFiles} />
+                  </label>
+                )}
+              </div>
+            </div>
+
             {/* Save button */}
             <button
               className="btn btn-dark w-100 rounded-3 py-3"
@@ -180,7 +291,7 @@ export default function EditListingModal({ item, onClose }) {
               onClick={save}
               disabled={loading}
             >
-              {loading ? 'Notifying buyer…' : status === 'Sold' ? 'Notify buyer' : 'Save changes'}
+              {loading ? 'Saving…' : status === 'Sold' ? 'Notify buyer' : 'Save changes'}
             </button>
           </div>
         </div>

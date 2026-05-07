@@ -18,7 +18,7 @@ router.get('/', getListings);
 
 router.post('/', requireAuth, uploadListingImage.array('images', 5), createListing);
 
-router.patch('/:id',         requireAuth, updateListing);
+router.patch('/:id',         requireAuth, uploadListingImage.array('images', 5), updateListing);
 router.patch('/:id/nominate', requireAuth, nominateBuyer);
 router.patch('/:id/confirm',  requireAuth, confirmPurchase);
 router.patch('/:id/reject',   requireAuth, rejectPurchase);

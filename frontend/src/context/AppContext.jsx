@@ -11,7 +11,7 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
-const API = 'http://localhost:5002/api';
+const API = import.meta.env.VITE_API_URL;
 
 const AppContext = createContext(null);
 
