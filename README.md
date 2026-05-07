@@ -1,81 +1,69 @@
 # ReLoop
 
-ReLoop UMass is a full-stack web application designed to support students at the University of Massachusetts Amherst and the broader Five College community. Students frequently move between apartments due to semester transitions, internships, study abroad programs, and graduation. As a result, they often need to buy or sell furniture, textbooks, electronics, and other everyday items quickly and affordably. Additionally, students searching for housing often struggle to find centralized, reliable, and student-relevant housing information.
+ReLoop is a full-stack web application for students at the University of Massachusetts Amherst and the broader Five College community. It solves two problems students face every semester:
 
-Currently, students rely on general platforms such as Facebook Marketplace and Craigslist, which are not specifically designed for student communities and lack verification mechanisms. ReLoop UMass addresses this issue by providing a platform where marketplace access requires login through verified @umass.edu email accounts, ensuring a secure student-only environment.
+1. **Finding housing** — a centralized hub for exploring housing areas near campus, with community reviews and ratings.
+2. **Buying and selling items** — a verified student-only marketplace where only `@umass.edu` accounts can list and purchase items, keeping the community safe and trusted.
 
-## System Services
-
-The system combines two primary services:
-
-### Public Housing Information Hub
-Allows anyone to explore housing information around campus.
-
-### Verified Student Marketplace
-Allows only verified university users to buy and sell items within the community.
-
-## Goal of the Platform
-
-The platform aims to improve affordability, sustainability, and convenience by enabling students to reuse items and easily access housing information within the Five College ecosystem.
+Unlike general platforms (Facebook Marketplace, Craigslist), ReLoop is purpose-built for UMass students with email verification, a purchase confirmation workflow, and seller ratings.
 
 ---
 
-## Prerequisites
+## Tech Stack
 
-- [Node.js](https://nodejs.org/) v18 or higher
-- npm v9 or higher
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, React Router v6, Bootstrap 5 |
+| Backend | Node.js, Express 4 |
+| Database | MongoDB (Mongoose) |
+| Auth | JWT (jsonwebtoken + bcryptjs) |
+| File Storage | AWS S3 (listing images) |
+| Email | Resend (email verification) |
+| Logging | Winston |
+| Backend Tests | Node.js built-in test runner |
+| Frontend Tests | Vitest + React Testing Library |
 
 ---
 
-## Getting Started
+## Quick Start
 
-### 1. Clone the repository
+See [BUILD.md](BUILD.md) for full installation, environment variable setup, seeding, and deployment instructions.
 
 ```bash
+# 1. Clone
 git clone https://github.com/ssania/ReLoop.git
 cd ReLoop
+
+# 2. Backend (Terminal 1)
+cd backend && npm install && npm run dev
+
+# 3. Frontend (Terminal 2)
+cd frontend && npm install && npm run dev
 ```
 
-### 2. Start the backend
-
-```bash
-cd backend
-npm install
-node seed.js
-npm run dev
-```
-
-Run `node seed.js` once to populate MongoDB with mock users and listings before starting the server. The API will be available at `http://localhost:5002`.
-
-### 3. Start the frontend
-
-Open a new terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`.
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:5002`
 
 ---
 
-## Project Structure
+## Repository Structure
 
 ```
 ReLoop/
-├── backend/
-│   ├── config/         # S3 upload configuration
-│   ├── controllers/    # Route handler logic
-│   ├── models/         # Mongoose schemas + mock data wrappers
-│   ├── routes/         # Express route definitions
-│   ├── mockData.js     # In-memory seed data (used while DB is not connected)
-│   └── server.js       # Express app entry point
-└── frontend/
-    ├── src/
-    │   ├── components/ # Reusable UI components
-    │   ├── context/    # React Context (global state)
-    │   └── pages/      # Page-level components
-    └── index.html
+├── backend/        # Express API — see backend/BACKEND.md
+├── frontend/       # React app — see frontend/README.md
+├── BUILD.md        # Full installation & deployment guide
+└── README.md       # This file
 ```
+
+---
+
+## Key Features
+
+- `@umass.edu`-only registration with email verification
+- Browse housing areas and leave reviews (public)
+- Create, edit, and delete item listings with image uploads
+- Nominate a buyer → buyer confirms or rejects → listing marked Sold
+- Seller ratings calculated from buyer reviews
+- Favorites list per user
+- Protected routes — marketplace and profile require login
