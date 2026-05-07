@@ -1,5 +1,6 @@
 // ── Housing routes ──────────────────────────────────────────────────────────
 // GET    /api/housing                              → getHousing (public)
+// PATCH  /api/housing/:id                         → updateHousing (auth)
 // GET    /api/housing/:areaId/reviews              → getHousingReviews (public)
 // POST   /api/housing/:areaId/reviews              → createHousingReview (auth)
 // PATCH  /api/housing/:areaId/reviews/:reviewId   → updateHousingReview (auth, own)
@@ -8,7 +9,8 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddeware');
-const { getHousing } = require('../controllers/housingController');
+const { uploadHousingImage } = require('../config/s3');
+const { getHousing, updateHousing } = require('../controllers/housingController');
 const {
   getHousingReviews,
   createHousingReview,
@@ -17,6 +19,7 @@ const {
 } = require('../controllers/housingReviewController');
 
 router.get('/', getHousing);
+router.patch('/:id', authMiddleware, uploadHousingImage.any(), updateHousing);
 
 router.get('/:areaId/reviews', getHousingReviews);
 router.post('/:areaId/reviews', authMiddleware, createHousingReview);

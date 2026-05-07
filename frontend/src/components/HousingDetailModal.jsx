@@ -16,12 +16,15 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../data/constants';
 import HousingImageCarousel from './HousingImageCarousel';
+import EditHousingModal from './EditHousingModal';
 
 export default function HousingDetailModal({ h, onClose }) {
   const { showToast, addHousingReview, editHousingReview, deleteHousingReview } = useApp();
   const { user } = useAuth();
 
   const userReview = user ? h.housingReviews.find(r => r.reviewerId === user.id) ?? null : null;
+
+  const [editingHousing, setEditingHousing] = useState(false);
 
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState('');
@@ -71,6 +74,10 @@ export default function HousingDetailModal({ h, onClose }) {
     await deleteHousingReview(h.id, reviewId);
   };
 
+  if (editingHousing) {
+    return <EditHousingModal h={h} onClose={() => setEditingHousing(false)} />;
+  }
+
   return (
     // Backdrop – click outside the modal dialog to close.
     <div className="modal fade show d-block" tabIndex="-1"
@@ -82,6 +89,20 @@ export default function HousingDetailModal({ h, onClose }) {
 
           {/* Floating close button. */}
           <button className="dm-close" onClick={onClose}>✕</button>
+
+          {/* Edit housing button – visible only to logged-in users */}
+          {user && (
+            <button
+              onClick={() => setEditingHousing(true)}
+              style={{
+                position: 'absolute', top: '14px', right: '52px', zIndex: 10,
+                background: 'rgba(255,255,255,.9)', border: '1px solid var(--sand3)',
+                borderRadius: '8px', padding: '4px 10px', fontSize: '11px',
+                fontWeight: 600, color: 'var(--sage)', cursor: 'pointer',
+              }}>
+              ✏️ Edit
+            </button>
+          )}
 
           {/* ── Modal body ── */}
           <div className="modal-body p-4">
@@ -138,7 +159,7 @@ export default function HousingDetailModal({ h, onClose }) {
                     <div className="rounded-3 overflow-hidden h-100 d-flex flex-column" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                       {/* Image – real <img> when imageUrl is set, placeholder otherwise. */}
                       {fp.imageUrl ? (
-                        <img src={fp.imageUrl} alt={`${fp.layout} floor plan`} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                        <img src={fp.imageUrl} alt={`${fp.layout} floor plan`} style={{ width: '100%', maxHeight: '320px', objectFit: 'contain', background: '#f8f6f2', padding: '12px' }} />
                       ) : (
                         <div className="d-flex align-items-center justify-content-center" style={{ height: '140px', background: 'linear-gradient(135deg,#f0ebe0,#e5dcc8)' }}>
                           <span style={{ fontSize: '11px', color: 'var(--muted)' }}>🖼️ Floor plan image coming soon</span>

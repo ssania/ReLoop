@@ -210,6 +210,25 @@ export function AppProvider({ children }) {
     }
   }, [showToast, authHeaders]);
 
+  const updateHousing = useCallback(async (id, formData) => {
+    try {
+      const res = await fetch(`${API}/housing/${id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+      setHousing(prev => prev.map(h => (h.id?.toString() === id.toString() ? { ...data, id: data._id?.toString() ?? data.id, housingReviews: h.housingReviews } : h)));
+      showToast('Housing updated', '✅');
+      return true;
+    } catch (err) {
+      console.error('Failed to update housing:', err);
+      showToast('Could not update housing', '⚠️');
+      return false;
+    }
+  }, [showToast, token]);
+
   const deleteHousingReview = useCallback(async (areaId, reviewId) => {
     try {
       const res = await fetch(`${API}/housing/${areaId}/reviews/${reviewId}`, {
@@ -238,6 +257,7 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       listings, housing, loading,
       addListing, updateListing, deleteListing, confirmPurchase, rejectPurchase,
+      updateHousing,
       addHousingReview, editHousingReview, deleteHousingReview,
       favoriteIds, toggleFavorite, showToast, toast,
     }}>
