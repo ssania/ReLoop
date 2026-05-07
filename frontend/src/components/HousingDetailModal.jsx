@@ -138,7 +138,7 @@ export default function HousingDetailModal({ h, onClose }) {
                     <div className="rounded-3 overflow-hidden h-100 d-flex flex-column" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
                       {/* Image – real <img> when imageUrl is set, placeholder otherwise. */}
                       {fp.imageUrl ? (
-                        <img src={fp.imageUrl} alt={`${fp.layout} floor plan`} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                        <img src={fp.imageUrl} alt={`${fp.layout} floor plan`} style={{ width: '100%', maxHeight: '320px', objectFit: 'contain', background: '#f8f6f2', padding: '12px' }} />
                       ) : (
                         <div className="d-flex align-items-center justify-content-center" style={{ height: '140px', background: 'linear-gradient(135deg,#f0ebe0,#e5dcc8)' }}>
                           <span style={{ fontSize: '11px', color: 'var(--muted)' }}>🖼️ Floor plan image coming soon</span>

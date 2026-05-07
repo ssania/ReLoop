@@ -105,7 +105,7 @@ export default function DetailModal({ item, onClose }) {
                 </div>
               </div>
               <div style={{ fontFamily: 'Syne,sans-serif', fontSize: 'clamp(26px,5vw,34px)', fontWeight: 800, letterSpacing: '-1px', flexShrink: 0 }}>
-                ${item.price}
+                {item.price === 0 ? 'Free' : `$${item.price}`}
               </div>
             </div>
 
@@ -163,7 +163,7 @@ export default function DetailModal({ item, onClose }) {
   href={`mailto:${item.owner.email}?subject=${encodeURIComponent(
     `Interested in ${item.title}`
   )}&body=${encodeURIComponent(
-    `Hi ${item.owner.name.split(' ')[0]}, I am interested in your listing for ${item.title} ($${item.price}). Is it still available?`
+    `Hi ${item.owner.name.split(' ')[0]}, I am interested in your listing for ${item.title} (${item.price === 0 ? 'Free' : `$${item.price}`}). Is it still available?`
   )}`}
   className="btn btn-dark flex-grow-1 rounded-3 py-3 text-decoration-none text-center"
   style={{

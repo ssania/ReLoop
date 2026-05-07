@@ -28,12 +28,6 @@ export default function Home() {
   // selectedItem: null when no modal is open; set to a listing object to open DetailModal.
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // Static platform stats shown in the stats row below the hero.
-  const stats = [
-    ['6', 'Neighborhoods'], ['1,240', 'Marketplace items'],
-    ['3,800+', 'Verified students'], ['×5', 'Colleges'],
-  ];
-
   return (
     <>
       {/* ── HERO ─────────────────────────────────────────────────────────────
@@ -95,19 +89,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── STATS ROW ──────────────────────────────────────────────────────────
-          4 equal-width columns with g-0 (no gutter) and border-end dividers.
-          The last column uses the conditional class to skip the trailing border. */}
-      <div className="bg-white border-top">
-        <div className="row g-0">
-          {stats.map(([n, l], i) => (
-            <div key={l} className={`col-6 col-md-3 py-3 px-4${i < 3 ? ' border-end' : ''}`}>
-              <div style={{ fontFamily: 'Syne,sans-serif', fontSize: '24px', fontWeight: 800, letterSpacing: '-.8px' }}>{n}</div>
-              <div style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '3px' }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* ── RECENT LISTINGS — visible only when logged in ──────────────────── */}
       {user && (

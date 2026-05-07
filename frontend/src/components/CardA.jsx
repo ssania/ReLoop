@@ -76,7 +76,7 @@ export default function CardA({ item, onClick }) {
 
         <div className="d-flex align-items-center justify-content-between mb-2">
           <div style={{ fontFamily: 'Syne,sans-serif', fontSize: '20px', fontWeight: 800, letterSpacing: '-.6px' }}>
-            ${item.price}
+            {item.price === 0 ? 'Free' : `$${item.price}`}
           </div>
           <span className="badge rounded-pill border" style={{ background: 'var(--sand)', color: 'var(--faint)', fontSize: '10px', fontWeight: 400, borderColor: 'var(--sand3)!important' }}>
             {item.condition}
