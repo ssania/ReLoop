@@ -23,6 +23,21 @@ function loadController(overrides = {}) {
     findByIdAndDelete: async () => null,
     ...overrides.ListingMongoose,
   };
+  // Convenience: let tests supply a single listing doc used by both findById calls
+  if (overrides._listing) {
+    const doc = overrides._listing;
+    let calls = 0;
+    ListingMongoose.findById = () => {
+      calls += 1;
+      // first call returns the mutable doc (no populate chain needed)
+      // second call (re-fetch after save) returns a populate+lean chain
+      if (calls === 1) return Promise.resolve(doc);
+      return {
+        populate() { return this; },
+        lean: async () => ({ ...doc, _id: doc._id }),
+      };
+    };
+  }
   const ListingModel = {
     getAll: async () => [],
     create: async data => data,
@@ -114,33 +129,130 @@ test('createListing uses authenticated owner and S3 file metadata', async () => 
   assert.deepEqual(errorRes.body, { message: 'Failed to create listing' });
 });
 
-test('updateListing returns updated, not-found, and error responses', async () => {
-  const success = loadController({
-    ListingModel: { update: async (id, body) => ({ id, ...body }) },
-  }).controller;
-  const successRes = mockResponse();
+test('updateListing returns 404 when listing is not found', async () => {
+  const { controller } = loadController({
+    ListingMongoose: { findById: async () => null },
+  });
+  const res = mockResponse();
+  await controller.updateListing({ params: { id: 'missing' }, body: {} }, res);
+  assert.equal(res.statusCode, 404);
+  assert.deepEqual(res.body, { message: 'Listing not found' });
+});
 
-  await success.updateListing({ params: { id: 'listing-1' }, body: { price: 20 } }, successRes);
+test('updateListing applies scalar field changes and returns updated listing', async () => {
+  process.env.S3_BUCKET_NAME = 'test-bucket';
+  const listing = {
+    _id: 'listing-1',
+    title: 'Old title',
+    price: 10,
+    imageUrls: [{ url: 'https://s3/a.jpg', key: 'listings/a.jpg' }],
+    save: async function () { return this; },
+  };
+  const { controller } = loadController({ _listing: listing });
+  const res = mockResponse();
 
-  assert.deepEqual(successRes.body, { id: 'listing-1', price: 20 });
+  await controller.updateListing({
+    params: { id: 'listing-1' },
+    body: { title: 'New title', price: '50', removeImageKeys: undefined },
+    files: [],
+  }, res);
 
-  const notFound = loadController({
-    ListingModel: { update: async () => null },
-  }).controller;
-  const notFoundRes = mockResponse();
+  assert.equal(listing.title, 'New title');
+  assert.equal(res.statusCode, 200);
+});
 
-  await notFound.updateListing({ params: { id: 'missing' }, body: {} }, notFoundRes);
+test('updateListing removes specified S3 keys and strips them from imageUrls', async () => {
+  process.env.S3_BUCKET_NAME = 'test-bucket';
+  const sent = [];
+  const listing = {
+    _id: 'listing-1',
+    imageUrls: [
+      { url: 'https://s3/a.jpg', key: 'listings/a.jpg' },
+      { url: 'https://s3/b.jpg', key: 'listings/b.jpg' },
+    ],
+    save: async function () { return this; },
+  };
+  const { controller } = loadController({
+    _listing: listing,
+    s3: { send: async cmd => { sent.push(cmd.input); } },
+  });
+  const res = mockResponse();
 
-  assert.equal(notFoundRes.statusCode, 404);
+  await controller.updateListing({
+    params: { id: 'listing-1' },
+    body: { removeImageKeys: JSON.stringify(['listings/a.jpg']), title: 'Desk' },
+    files: [],
+  }, res);
 
-  const failing = loadController({
-    ListingModel: { update: async () => { throw new Error('db down'); } },
-  }).controller;
-  const errorRes = mockResponse();
+  assert.equal(listing.imageUrls.length, 1);
+  assert.equal(listing.imageUrls[0].key, 'listings/b.jpg');
+  assert.deepEqual(sent[0], {
+    Bucket: 'test-bucket',
+    Delete: { Objects: [{ Key: 'listings/a.jpg' }] },
+  });
+});
 
-  await failing.updateListing({ params: { id: 'listing-1' }, body: {} }, errorRes);
+test('updateListing appends newly uploaded files to imageUrls', async () => {
+  process.env.S3_BUCKET_NAME = 'test-bucket';
+  const listing = {
+    _id: 'listing-1',
+    imageUrls: [{ url: 'https://s3/a.jpg', key: 'listings/a.jpg' }],
+    save: async function () { return this; },
+  };
+  const { controller } = loadController({ _listing: listing });
+  const res = mockResponse();
 
-  assert.equal(errorRes.statusCode, 500);
+  await controller.updateListing({
+    params: { id: 'listing-1' },
+    body: { title: 'Desk' },
+    files: [
+      { location: 'https://s3/b.jpg', key: 'listings/b.jpg' },
+      { location: 'https://s3/c.jpg', key: 'listings/c.jpg' },
+    ],
+  }, res);
+
+  assert.equal(listing.imageUrls.length, 3);
+  assert.equal(listing.imageUrls[1].key, 'listings/b.jpg');
+  assert.equal(listing.imageUrls[2].key, 'listings/c.jpg');
+});
+
+test('updateListing removes old images and appends new ones in the same request', async () => {
+  process.env.S3_BUCKET_NAME = 'test-bucket';
+  const sent = [];
+  const listing = {
+    _id: 'listing-1',
+    imageUrls: [
+      { url: 'https://s3/a.jpg', key: 'listings/a.jpg' },
+      { url: 'https://s3/b.jpg', key: 'listings/b.jpg' },
+    ],
+    save: async function () { return this; },
+  };
+  const { controller } = loadController({
+    _listing: listing,
+    s3: { send: async cmd => { sent.push(cmd.input); } },
+  });
+  const res = mockResponse();
+
+  await controller.updateListing({
+    params: { id: 'listing-1' },
+    body: { removeImageKeys: JSON.stringify(['listings/a.jpg']), title: 'Desk' },
+    files: [{ location: 'https://s3/c.jpg', key: 'listings/c.jpg' }],
+  }, res);
+
+  assert.equal(listing.imageUrls.length, 2);
+  assert.equal(listing.imageUrls[0].key, 'listings/b.jpg');
+  assert.equal(listing.imageUrls[1].key, 'listings/c.jpg');
+  assert.equal(sent.length, 1);
+});
+
+test('updateListing returns 500 on unexpected error', async () => {
+  const { controller } = loadController({
+    ListingMongoose: { findById: async () => { throw new Error('db down'); } },
+  });
+  const res = mockResponse();
+  await controller.updateListing({ params: { id: 'listing-1' }, body: {} }, res);
+  assert.equal(res.statusCode, 500);
+  assert.deepEqual(res.body, { message: 'Failed to update listing' });
 });
 
 test('deleteListing deletes S3 images before removing the listing', async () => {

@@ -43,11 +43,43 @@ const createListing = async (req, res) => {
 };
 
 // PATCH /api/listings/:id
+// Accepts optional multipart/form-data with new image files.
+// Accepts optional JSON field `removeImageKeys` (array of S3 keys to delete).
 const updateListing = async (req, res) => {
   try {
-    const updated = await ListingModel.update(req.params.id, req.body);
-    if (!updated) return res.status(404).json({ message: 'Listing not found' });
-    res.json(updated);
+    const listing = await ListingMongoose.findById(req.params.id);
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    // Remove images the seller deleted in the UI
+    const removeKeys = req.body.removeImageKeys
+      ? JSON.parse(req.body.removeImageKeys)
+      : [];
+
+    if (removeKeys.length > 0) {
+      await s3.send(new DeleteObjectsCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Delete: { Objects: removeKeys.map(k => ({ Key: k })) },
+      }));
+      listing.imageUrls = listing.imageUrls.filter(img => !removeKeys.includes(img.key));
+    }
+
+    // Append any newly uploaded images
+    if (req.files?.length > 0) {
+      const newImages = req.files.map(f => ({ url: f.location, key: f.key }));
+      listing.imageUrls.push(...newImages);
+    }
+
+    // Apply scalar field changes
+    const { removeImageKeys: _removed, ...fields } = req.body;
+    Object.assign(listing, fields);
+    const updated = await listing.save();
+
+    const populated = await ListingMongoose.findById(updated._id)
+      .populate('owner', 'name avgRating email')
+      .populate('buyer', 'name email')
+      .lean();
+
+    res.json({ ...populated, id: populated._id.toString() });
   } catch (err) {
     console.error('Failed to update listing:', err);
     res.status(500).json({ message: 'Failed to update listing' });
