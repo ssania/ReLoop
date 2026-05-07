@@ -95,12 +95,15 @@ CLIENT_URL=http://localhost:5173
 # Development (auto-restarts on file change)
 npm run dev
 
-# Production
-npm start
+# Build frontend + start production server
+npm run build   # runs: cd ../frontend && npm install && npm run build
+npm start       # runs: node server.js
 ```
 
-Server starts on `http://localhost:5002` by default.  
-Health check: `GET /` → `{ "message": "ReLoop API is running" }`
+- **Development:** server starts on `http://localhost:5002`. Health check: `GET /` → `{ "message": "ReLoop API is running" }`
+- **Production** (`NODE_ENV=production`): Express serves `frontend/dist/` as static files. All `/*` routes return `index.html` so React Router handles navigation. Only `/api/*` routes are handled by Express.
+
+See [BUILD.md](../BUILD.md) for full Render deployment settings and environment variable reference.
 
 ---
 

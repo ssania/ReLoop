@@ -199,38 +199,72 @@ npm run test:coverage
 
 ## Deployment
 
-### Backend
+ReLoop is deployed as a **single unified service on Render**. In production, Express serves the built React frontend from `frontend/dist/` — there is no separate frontend host.
 
-The backend is a standard Node.js/Express app and can be deployed to any Node-compatible host (AWS EC2, Railway, Render, etc.).
-
-**Production start command:**
-```bash
-npm start
+```
+Render (one service)
+   ├── Build:  npm install && npm run build   ← installs backend deps + builds React
+   └── Start:  npm start                      ← Express serves API + frontend/dist/
+               ├── /api/*   → REST API routes
+               └── /*       → React app (index.html)
 ```
 
-Make sure all environment variables from `backend/.env` are set in your hosting provider's dashboard.
+### Render Dashboard Settings
 
-**Required for production:**
-- `MONGO_URI` pointing to your production MongoDB Atlas cluster
-- `JWT_SECRET` set to a long, random string
-- `RESEND_API_KEY` for email verification to work
-- All AWS S3 variables for image uploads to work
-- `CLIENT_URL` set to your deployed frontend URL (e.g. `https://reloop.vercel.app`)
+| Setting | Value |
+|---|---|
+| **Root Directory** | `backend` |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `npm start` |
+| **Node Version** | 18 or higher |
 
-### Frontend
-
-The frontend is a Vite/React app. Build the static bundle and deploy it to any static host (Vercel, Netlify, AWS S3, etc.).
-
+The `build` script in `backend/package.json` runs:
 ```bash
-cd frontend
-npm run build
+cd ../frontend && npm install && npm run build
+```
+This builds the React app into `frontend/dist/`, which Express then serves statically when `NODE_ENV=production`.
+
+### Environment Variables
+
+Set all of the following in the Render dashboard under **Environment**. `VITE_*` variables must be present at build time (Vite bakes them in at compile time, not runtime).
+
+| Variable | Example Value | Notes |
+|---|---|---|
+| `NODE_ENV` | `production` | Required — enables static file serving |
+| `PORT` | `5002` | Render sets this automatically |
+| `MONGO_URI` | `mongodb+srv://...` | MongoDB Atlas connection string |
+| `JWT_SECRET` | `a-long-random-string` | Use a strong random value |
+| `JWT_EXPIRES_IN` | `7d` | Token lifetime |
+| `RESEND_API_KEY` | `re_...` | Resend API key for email verification |
+| `CLIENT_URL` | `https://your-app.onrender.com` | Used in verification email links |
+| `AWS_REGION` | `us-east-1` | S3 bucket region |
+| `AWS_ACCESS_KEY_ID` | `AKIA...` | AWS IAM key |
+| `AWS_SECRET_ACCESS_KEY` | `...` | AWS IAM secret |
+| `S3_BUCKET_NAME` | `reloop-images` | S3 bucket for listing images |
+| `VITE_API_URL` | `https://your-app.onrender.com/api` | Backend API URL — baked in at build time |
+| `VITE_FRONTEND_URL` | `https://your-app.onrender.com` | Frontend URL — used for verify redirect |
+
+### How the Production Server Works
+
+In `backend/server.js`, when `NODE_ENV=production`:
+
+```js
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+});
 ```
 
-Output will be in `frontend/dist/`. Point your host to serve that folder.
+All `/api/*` routes are matched first by Express. Everything else falls through to `index.html`, letting React Router handle client-side navigation.
 
-**Required for production:**
-- `VITE_API_URL` set to your deployed backend URL (e.g. `https://api.reloop.com/api`)
-- `VITE_FRONTEND_URL` set to your deployed frontend URL
+### Deploying a New Branch
+
+To switch Render to a different branch:
+1. Go to your Render service → **Settings** → **Branch**
+2. Change to the target branch
+3. Trigger a manual deploy or push a commit to that branch
+
+All environment variables carry over — no changes needed.
 
 ---
 

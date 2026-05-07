@@ -2,6 +2,8 @@
 
 React + Vite single-page application for the ReLoop platform. Communicates with the Express backend via REST API.
 
+> In production, the frontend is **not** hosted separately. The backend's `npm run build` script builds this app into `frontend/dist/`, which Express then serves as static files. See [BUILD.md](../BUILD.md) for full deployment details.
+
 ---
 
 ## Tech Stack
@@ -73,7 +75,7 @@ VITE_API_URL=http://localhost:5002/api
 VITE_FRONTEND_URL=http://localhost:5173
 ```
 
-For production, set these to your deployed backend and frontend URLs.
+For production, these are set in the Render dashboard and baked in at build time by Vite. See [BUILD.md](../BUILD.md) for production values.
 
 ---
 
@@ -97,6 +99,8 @@ npm run build
 # Preview the production build locally
 npm run preview
 ```
+
+> You do not normally need to run `npm run build` manually. In production, the backend's build script (`cd ../frontend && npm install && npm run build`) handles this automatically on Render.
 
 ---
 

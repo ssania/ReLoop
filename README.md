@@ -25,6 +25,10 @@ Unlike general platforms (Facebook Marketplace, Craigslist), ReLoop is purpose-b
 
 ---
 
+## Deployment
+
+ReLoop is deployed as a single service on **Render**. Express serves the built React app in production — no separate frontend host needed. See [BUILD.md](BUILD.md) for full Render setup, environment variables, and branch switching instructions.
+
 ## Quick Start
 
 See [BUILD.md](BUILD.md) for full installation, environment variable setup, seeding, and deployment instructions.
@@ -51,7 +55,7 @@ cd frontend && npm install && npm run dev
 ```
 ReLoop/
 ├── backend/        # Express API — see backend/BACKEND.md
-├── frontend/       # React app — see frontend/README.md
+├── frontend/       # React app — see frontend/FRONTEND.md
 ├── BUILD.md        # Full installation & deployment guide
 └── README.md       # This file
 ```
