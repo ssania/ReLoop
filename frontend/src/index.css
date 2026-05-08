@@ -105,7 +105,7 @@ body { font-family:'DM Sans',sans-serif!important; background:var(--sand)!import
    exposes arrows and dots. Placeholder slides are styled like mock photos so
    real housing images can replace them later without changing the UI structure. */
 .housing-carousel { background:var(--sand2); width:100%; }
-.housing-carousel-track { transition:transform .45s ease; will-change:transform; }
+.housing-carousel-track { will-change:transform; }
 .housing-carousel-slide { flex:0 0 auto; height:100%; }
 .housing-carousel-image { width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
 .housing-placeholder-slide { padding:20px; isolation:isolate; }

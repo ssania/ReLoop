@@ -104,7 +104,7 @@ export default function HousingImageCarousel({
     >
       <div
         className="housing-carousel-track d-flex h-100"
-        style={{ width: `${slides.length * 100}%`, transform: `translateX(-${(100 / slides.length) * activeIndex}%)` }}
+        style={{ width: `${slides.length * 100}%`, transform: `translateX(-${(100 / slides.length) * activeIndex}%)`, transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}
       >
         {slides.map((slide, index) => (
           <div key={slide.src ?? `${slide.label}-${index}`} className="housing-carousel-slide position-relative" style={{ width: `${100 / slides.length}%` }}>
