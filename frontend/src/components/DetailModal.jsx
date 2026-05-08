@@ -15,6 +15,7 @@
 
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { IMG_BG, formatDate } from '../data/constants';
 
 function statusClass(s) {
@@ -25,10 +26,18 @@ function statusClass(s) {
 
 export default function DetailModal({ item, onClose }) {
   const { favoriteIds, toggleFavorite, showToast } = useApp();
+  const { user } = useAuth();
 
+  const isOwner = user && item.owner?._id?.toString() === user.id;
   const saved    = favoriteIds.has(item.id);
   const bg       = IMG_BG[item.category] || IMG_BG.Other;
   const initials = item.owner.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+  const showBuyer = isOwner && item.status === 'Sold' && item.buyer?.name;
+  const personName    = showBuyer ? item.buyer.name : item.owner.name;
+  const personInitials = showBuyer
+    ? item.buyer.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    : initials;
   const images   = item.imageUrls || [];
   const [current, setCurrent] = useState(0);
 
@@ -46,6 +55,9 @@ export default function DetailModal({ item, onClose }) {
         <div className="modal-content rounded-4 position-relative overflow-hidden">
 
           <button className="dm-close" onClick={onClose}>✕</button>
+
+          {/* ── Modal body (image + content scroll together) ── */}
+          <div className="modal-body p-0">
 
           {/* ── Hero image / carousel ── */}
           <div className="d-flex align-items-center justify-content-center position-relative overflow-hidden"
@@ -65,17 +77,14 @@ export default function DetailModal({ item, onClose }) {
                 />
                 {images.length > 1 && (
                   <>
-                    {/* Prev button */}
                     <button
                       onClick={e => { e.stopPropagation(); setCurrent(i => (i - 1 + images.length) % images.length); }}
                       style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >‹</button>
-                    {/* Next button */}
                     <button
                       onClick={e => { e.stopPropagation(); setCurrent(i => (i + 1) % images.length); }}
                       style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.4)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >›</button>
-                    {/* Dot indicators */}
                     <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 3, display: 'flex', gap: '6px' }}>
                       {images.map((_, i) => (
                         <div key={i} onClick={e => { e.stopPropagation(); setCurrent(i); }}
@@ -91,8 +100,8 @@ export default function DetailModal({ item, onClose }) {
             )}
           </div>
 
-          {/* ── Modal body ── */}
-          <div className="modal-body p-4">
+          {/* ── Content ── */}
+          <div className="p-4">
 
             {/* Title + price */}
             <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
@@ -143,15 +152,19 @@ export default function DetailModal({ item, onClose }) {
               </div>
             </div>
 
-            {/* Seller — owner.name and owner.avgRating from the populated owner object. */}
+            {/* Seller / Buyer section */}
             <div className="mb-4">
-              <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>Seller</div>
+              <div className="text-uppercase fw-semibold mb-2" style={{ fontSize: '10px', letterSpacing: '1.5px', color: 'var(--muted)' }}>
+                {showBuyer ? 'Buyer' : 'Seller'}
+              </div>
               <div className="d-flex align-items-center gap-3 p-3 rounded-3" style={{ background: 'var(--sand)', border: '1px solid var(--sand3)' }}>
-                <div className="dm-seller-avatar">{initials}</div>
+                <div className="dm-seller-avatar">{personInitials}</div>
                 <div>
-                  <div className="fw-bold" style={{ fontFamily: 'Syne,sans-serif', fontSize: '14px' }}>{item.owner.name}</div>
+                  <div className="fw-bold" style={{ fontFamily: 'Syne,sans-serif', fontSize: '14px' }}>{personName}</div>
                   <div style={{ fontSize: '11px', fontWeight: 300, color: 'var(--muted)', marginTop: '2px' }}>
-                    ⭐ {item.owner.avgRating.toFixed(1)} · Verified UMass student
+                    {showBuyer
+                      ? `⭐ ${item.buyer.avgRating?.toFixed(1) ?? '—'} · Verified UMass student`
+                      : `⭐ ${item.owner.avgRating.toFixed(1)} · Verified UMass student`}
                   </div>
                 </div>
               </div>
@@ -159,25 +172,36 @@ export default function DetailModal({ item, onClose }) {
 
             {/* Actions */}
             <div className="d-flex gap-2">
-              <a
-  href={`mailto:${item.owner.email}?subject=${encodeURIComponent(
-    `Interested in ${item.title}`
-  )}&body=${encodeURIComponent(
-    `Hi ${item.owner.name.split(' ')[0]}, I am interested in your listing for ${item.title} (${item.price === 0 ? 'Free' : `$${item.price}`}). Is it still available?`
-  )}`}
-  className="btn btn-dark flex-grow-1 rounded-3 py-3 text-decoration-none text-center"
-  style={{
-    fontFamily: 'DM Sans, sans-serif',
-    fontSize: '14px',
-  }}
->
-  💬 Contact Seller
-</a>
-              <button className={`dm-btn-save${saved ? ' saved' : ''}`} onClick={() => toggleFavorite(item.id)}>
-                {saved ? '♥' : '♡'}
-              </button>
+              {!isOwner && (
+                <a
+                  href={`mailto:${item.owner.email}?subject=${encodeURIComponent(
+                    `Interested in ${item.title}`
+                  )}&body=${encodeURIComponent(
+                    `Hi ${item.owner.name.split(' ')[0]}, I am interested in your listing for ${item.title} (${item.price === 0 ? 'Free' : `$${item.price}`}). Is it still available?`
+                  )}`}
+                  className="btn btn-dark flex-grow-1 rounded-3 py-3 text-decoration-none text-center"
+                  style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px' }}
+                >
+                  💬 Contact Seller
+                </a>
+              )}
+              {isOwner && item.status === 'Sold' && item.buyer?.email && (
+                <a
+                  href={`mailto:${item.buyer.email}?subject=${encodeURIComponent(`Re: ${item.title}`)}&body=${encodeURIComponent(`Hi ${item.buyer.name?.split(' ')[0] ?? 'there'},\n\n`)}`}
+                  className="btn btn-dark flex-grow-1 rounded-3 py-3 text-decoration-none text-center"
+                  style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px' }}
+                >
+                  📧 Contact Buyer
+                </a>
+              )}
+              {!isOwner && (
+                <button className={`dm-btn-save${saved ? ' saved' : ''}`} onClick={() => toggleFavorite(item.id)}>
+                  {saved ? '♥' : '♡'}
+                </button>
+              )}
             </div>
 
+          </div>
           </div>
         </div>
       </div>

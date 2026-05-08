@@ -123,7 +123,7 @@ export default function Profile() {
 
   // myListings: listings created by this user, matched by owner ID.
   const myListings       = listings.filter(m => m.owner?._id?.toString() === user?.id);
-  const myActiveListings = myListings.filter(m => m.status === 'Available' || m.status === 'In-talk');
+  const myActiveListings = myListings.filter(m => m.status === 'Available' || m.status === 'In-talk' || m.status === 'pending-confirmation');
   const mySoldListings   = myListings.filter(m => m.status === 'Sold');
   const favoriteItems = listings.filter(m => favoriteIds.has(m.id));
 
@@ -340,7 +340,7 @@ export default function Profile() {
                     <div key={item.id} className="card border p-4 rounded-4">
                       <div className="fw-bold text-truncate" style={{ fontFamily: 'Syne,sans-serif', fontSize: '14px' }}>{item.title}</div>
                       <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
-                        ${item.price} · {item.condition}
+                        {item.price === 0 ? 'Free' : `$${item.price}`} · {item.condition}
                       </div>
                       <div className="mt-1" style={{ fontSize: '11px', color: 'var(--muted)' }}>
                         ⏳ Waiting for <strong>{item.buyer?.name}</strong> to confirm.

@@ -1,7 +1,7 @@
 // ── Marketplace page ──────────────────────────────────────────────────────────
 // Verified student buy/sell board at "/marketplace".
 // Five independent filters narrow the listings array from AppContext:
-//   mktTab      – status tab: all | available | intalk | sold
+//   mktTab      – status tab: all | available | intalk
 //   cat         – category pill: all | Furniture | Textbooks | Electronics | …
 //   search      – text search across title and description
 //   priceFilter – max price ceiling (as a string to match <select> value)
@@ -24,7 +24,7 @@ const CATS = [
 ];
 
 // Status tab definitions used in the hero tab bar.
-const TABS = [['all','All items'],['available','Available'],['intalk','In-talk'],['sold','Sold']];
+const TABS = [['all','All items'],['available','Available'],['intalk','In-talk']];
 
 export default function Marketplace() {
   // listings from context; includes any items added via CreateListingModal.
@@ -41,6 +41,8 @@ export default function Marketplace() {
 
   // Derived filtered list – all filters are AND-ed together.
   const list = listings.filter(m => {
+    // Never show Sold or pending-confirmation listings.
+    if (m.status === 'Sold' || m.status === 'pending-confirmation') return false;
     // Category filter – skip if 'all' is selected.
     if (cat !== 'all' && m.category !== cat) return false;
     // Status tab filter: normalise "In-talk" → "intalk" for comparison.
@@ -58,25 +60,27 @@ export default function Marketplace() {
     <>
       {/* ── PAGE HERO ─────────────────────────────────────────────────────── */}
       <div className="bg-white border-bottom" style={{ padding: 'clamp(20px,4vw,36px) clamp(16px,4vw,40px) 0' }}>
-        <div className="d-flex align-items-start justify-content-between flex-wrap gap-3" style={{ maxWidth: '1160px', margin: '0 auto' }}>
-          <div>
-            {/* Terra dot + eyebrow label. */}
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--terra)' }}></div>
-              <span className="text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1.5px', color: 'var(--terra)' }}>Verified · @umass.edu only</span>
+        <div style={{ maxWidth: '1160px', margin: '0 auto' }}>
+          <div className="d-flex align-items-start justify-content-between flex-wrap gap-3">
+            <div>
+              {/* Terra dot + eyebrow label. */}
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--terra)' }}></div>
+                <span className="text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1.5px', color: 'var(--terra)' }}>Verified · @umass.edu only</span>
+              </div>
+              <h4 style={{ fontFamily: 'Syne,sans-serif', fontWeight: 800, letterSpacing: '-1px', marginBottom: '6px' }}>Student Marketplace</h4>
+              <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.7, maxWidth: '520px' }}>
+                Buy and sell within the UMass community. Every seller is a verified student.
+              </p>
             </div>
-            <h4 style={{ fontFamily: 'Syne,sans-serif', fontWeight: 800, letterSpacing: '-1px', marginBottom: '6px' }}>Student Marketplace</h4>
-            <p className="mb-0" style={{ fontSize: '13px', fontWeight: 300, color: 'var(--faint)', lineHeight: 1.7, maxWidth: '520px' }}>
-              Buy and sell within the UMass community. Every seller is a verified student.
-            </p>
           </div>
-        </div>
 
-        {/* Status tab bar – negative margin expands it to full-bleed. */}
-        <div className="ph-tab-bar mt-4" style={{ maxWidth: '1160px', margin: '16px auto 0', padding: '0 clamp(16px,4vw,40px)', marginLeft: 'clamp(-16px,-4vw,-40px)', marginRight: 'clamp(-16px,-4vw,-40px)' }}>
-          {TABS.map(([key, label]) => (
-            <button key={key} className={`ph-tab${mktTab === key ? ' on' : ''}`} onClick={() => setMktTab(key)}>{label}</button>
-          ))}
+          {/* Status tab bar */}
+          <div className="ph-tab-bar mt-4">
+            {TABS.map(([key, label]) => (
+              <button key={key} className={`ph-tab${mktTab === key ? ' on' : ''}`} onClick={() => setMktTab(key)}>{label}</button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -120,7 +124,7 @@ export default function Marketplace() {
           {/* Count row – shows filtered result count. */}
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
             <span className="text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1.5px', color: 'var(--muted)' }}>{list.length} items</span>
-            <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Available · In-talk · Sold</span>
+            <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Available · In-talk</span>
           </div>
 
           {/* Card grid or empty state. */}
