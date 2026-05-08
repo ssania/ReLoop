@@ -113,8 +113,7 @@ router.post('/login', async (req, res) => {
     if (!user)
       return res.status(401).json({ message: 'Invalid credentials.' });
 
-    const mailConfigured = !!process.env.RESEND_API_KEY;
-    if (mailConfigured && !user.verified)
+    if (!user.verified)
       return res.status(403).json({ message: 'Please verify your @umass.edu email before logging in. Check your inbox.' });
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);

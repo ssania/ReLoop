@@ -344,8 +344,7 @@ test('login returns token and user info on success', async () => {
   assert.deepEqual(res.body.user, { id: 'user-1', name: 'Alice', email: 'alice@umass.edu' });
 });
 
-test('login skips verification check and logs in when RESEND_API_KEY is not set', async () => {
-  process.env.JWT_SECRET = 'test-secret';
+test('login always blocks unverified users even when RESEND_API_KEY is not set', async () => {
   delete process.env.RESEND_API_KEY;
 
   const bcrypt = require('bcryptjs');
@@ -365,8 +364,8 @@ test('login skips verification check and logs in when RESEND_API_KEY is not set'
   const res = mockResponse();
   await login({ body: { email: 'alice@umass.edu', password: 'secret123' } }, res);
 
-  assert.equal(res.statusCode, 200);
-  assert.ok(res.body.token);
+  assert.equal(res.statusCode, 403);
+  assert.match(res.body.message, /verify/i);
 });
 
 test('login returns 500 on unexpected database error', async () => {
