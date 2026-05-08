@@ -49,6 +49,7 @@ const updateListing = async (req, res) => {
   try {
     const listing = await ListingMongoose.findById(req.params.id);
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
+    if (listing.status === 'Sold') return res.status(403).json({ message: 'Sold listings cannot be edited.' });
 
     // Remove images the seller deleted in the UI
     const removeKeys = req.body.removeImageKeys

@@ -40,7 +40,7 @@ const ListingModel = {
   async getAll() {
     const docs = await ListingMongoose.find({})
       .populate('owner', 'name avgRating email')
-      .populate('buyer', 'name email')
+      .populate('buyer', 'name email avgRating')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -64,7 +64,7 @@ const ListingModel = {
       { new: true }
     )
       .populate('owner', 'name avgRating email')
-      .populate('buyer', 'name email')
+      .populate('buyer', 'name email avgRating')
       .lean();
 
     return normalize(doc);

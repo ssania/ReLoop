@@ -97,13 +97,15 @@ export default function EditListingModal({ item, onClose }) {
         }
       }
 
-      // Send update as multipart so new images can be included
+      // Send update as multipart so new images can be included.
+      // When nominating a buyer the status is already set to pending-confirmation
+      // by the nominate endpoint — don't overwrite it here with 'Sold'.
       const formData = new FormData();
       formData.append('title', title.trim());
       formData.append('category', category);
       formData.append('price', +price);
       formData.append('condition', condition);
-      formData.append('status', status);
+      if (status !== 'Sold') formData.append('status', status);
       formData.append('description', description || 'No description provided.');
       formData.append('tags', JSON.stringify([category, condition]));
 

@@ -10,7 +10,7 @@ export function formatDate(value) {
   if (!value) return '';
   const d = new Date(value);
   if (isNaN(d.getTime())) return String(value); // already a display string
-  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // EMOJI: maps a listing category to its display emoji.
