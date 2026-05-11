@@ -18,8 +18,6 @@ export default function Register() {
   const [error, setError]       = useState('');
   const [success, setSuccess]   = useState('');
   const [loading, setLoading]   = useState(false);
-  const emailOk = email.trim().toLowerCase().endsWith('@umass.edu');
-  const canSubmit = !loading && emailOk;
 
   // Show @umass.edu warning as soon as they start typing an email.
   function validateEmail(val) {
@@ -171,14 +169,17 @@ export default function Register() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  className="btn btn-dark w-100 rounded-3 py-3"
+                  className="btn w-100 rounded-3 py-3"
                   style={{
                     fontFamily: 'DM Sans,sans-serif',
                     fontSize: '14px',
-                    opacity: canSubmit ? 1 : 0.55,
-                    cursor: canSubmit ? 'pointer' : 'not-allowed',
+                    background: email.toLowerCase().endsWith('@umass.edu') ? '#212529' : '#c8c8c4',
+                    color: email.toLowerCase().endsWith('@umass.edu') ? '#fff' : '#8a8a86',
+                    border: 'none',
+                    cursor: email.toLowerCase().endsWith('@umass.edu') ? 'pointer' : 'not-allowed',
+                    transition: 'background .2s, color .2s',
                   }}
-                  disabled={!canSubmit}
+                  disabled={loading}
                 >
                   {loading ? 'Creating account…' : '→ Create account'}
                 </button>
