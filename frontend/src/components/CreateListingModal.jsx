@@ -36,6 +36,7 @@ export default function CreateListingModal({ onClose, redirectTo }) {
   const [title, setTitle]             = useState('');
   const [category, setCategory]       = useState('Furniture');
   const [price, setPrice]             = useState('');
+  const [priceError, setPriceError]   = useState('');
   const [condition, setCondition]     = useState('New');
   const [description, setDescription] = useState('');
 
@@ -46,8 +47,12 @@ export default function CreateListingModal({ onClose, redirectTo }) {
   }, []);
 
   async function submit() {
-  if (!title.trim() || !price) {
+  if (!title.trim() || price === '') {
     showToast('Please fill in title & price', '⚠️');
+    return;
+  }
+  if (+price < 0) {
+    setPriceError('Price cannot be negative.');
     return;
   }
 
@@ -64,7 +69,7 @@ export default function CreateListingModal({ onClose, redirectTo }) {
     // ✅ Add images
     images.forEach(img => formData.append('images', img));
 
-    const res = await fetch('http://localhost:5002/api/listings', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/listings`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData
@@ -127,7 +132,20 @@ export default function CreateListingModal({ onClose, redirectTo }) {
               </div>
               <div className="col">
                 <label className="form-label text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--muted)' }}>Price ($)</label>
-                <input className="form-control" type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0" />
+                <input
+                  className={`form-control${priceError ? ' is-invalid' : ''}`}
+                  type="number"
+                  value={price}
+                  min="0"
+                  step="1"
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPrice(val);
+                    setPriceError(val !== '' && +val < 0 ? 'Price cannot be negative.' : '');
+                  }}
+                  placeholder="0 for free"
+                />
+                {priceError && <div className="invalid-feedback">{priceError}</div>}
               </div>
             </div>
 
