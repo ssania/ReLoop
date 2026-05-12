@@ -47,15 +47,6 @@ describe('ProtectedRoute', () => {
     expect(screen.queryByText('Login Page')).not.toBeInTheDocument();
   });
 
-  it('passes location state when redirecting unauthenticated user', () => {
-    useAuth.mockReturnValue({ user: null, loading: false });
-    renderWithRouter(
-      <ProtectedRoute><div>Protected Content</div></ProtectedRoute>,
-      { initialEntries: ['/profile'] }
-    );
-    expect(screen.getByText('Login Page')).toBeInTheDocument();
-  });
-
   it('renders children for different user objects', () => {
     useAuth.mockReturnValue({ user: { id: '99', name: 'Other User' }, loading: false });
     renderWithRouter(

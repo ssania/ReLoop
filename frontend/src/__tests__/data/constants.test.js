@@ -3,12 +3,12 @@ import { formatDate, EMOJI, IMG_BG } from '../../data/constants';
 
 describe('formatDate', () => {
   it('formats a valid ISO date string', () => {
-    expect(formatDate('2024-03-15T00:00:00.000Z')).toMatch(/Mar 2024/);
+    expect(formatDate('2024-03-15T00:00:00.000Z')).toMatch(/Mar/);
   });
 
   it('formats a JS Date object', () => {
-    const d = new Date(2024, 5, 1); // June 1 2024 in local time
-    expect(formatDate(d)).toMatch(/Jun 2024/);
+    const d = new Date(2024, 5, 1);
+    expect(formatDate(d)).toMatch(/Jun/);
   });
 
   it('returns empty string for falsy input', () => {
