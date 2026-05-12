@@ -128,8 +128,16 @@ export default function Login() {
 
             <button
               type="submit"
-              className="btn btn-dark w-100 rounded-3 py-3"
-              style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '14px' }}
+              className="btn w-100 rounded-3 py-3"
+              style={{
+                fontFamily: 'DM Sans,sans-serif',
+                fontSize: '14px',
+                background: email.toLowerCase().endsWith('@umass.edu') ? '#212529' : '#c8c8c4',
+                color: email.toLowerCase().endsWith('@umass.edu') ? '#fff' : '#8a8a86',
+                border: 'none',
+                cursor: email.toLowerCase().endsWith('@umass.edu') ? 'pointer' : 'not-allowed',
+                transition: 'background .2s, color .2s',
+              }}
               disabled={loading}
             >
               {loading ? 'Signing in…' : '→ Sign in'}

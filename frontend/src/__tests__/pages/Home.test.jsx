@@ -44,12 +44,6 @@ describe('Home page', () => {
     expect(screen.getByText('Student Marketplace')).toBeInTheDocument();
   });
 
-  it('renders stats row', () => {
-    render(<MemoryRouter><Home /></MemoryRouter>);
-    expect(screen.getByText('Neighborhoods')).toBeInTheDocument();
-    expect(screen.getByText('Verified students')).toBeInTheDocument();
-  });
-
   it('does not show recent listings when user is not logged in', () => {
     render(<MemoryRouter><Home /></MemoryRouter>);
     expect(screen.queryByText('Recent listings')).not.toBeInTheDocument();

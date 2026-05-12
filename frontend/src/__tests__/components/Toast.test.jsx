@@ -29,4 +29,29 @@ describe('Toast', () => {
     expect(screen.getByText('❤️')).toBeInTheDocument();
     expect(screen.getByText('Added to favorites!')).toBeInTheDocument();
   });
+
+  it('is always present in the DOM even when not visible', () => {
+    useApp.mockReturnValue({ toast: { msg: '', icon: '', visible: false } });
+    const { container } = render(<Toast />);
+    expect(container.firstChild).toBeInTheDocument();
+  });
+
+  it('has toast-reloop class at all times', () => {
+    useApp.mockReturnValue({ toast: { msg: '', icon: '', visible: false } });
+    const { container } = render(<Toast />);
+    expect(container.firstChild).toHaveClass('toast-reloop');
+  });
+
+  it('renders error icon correctly', () => {
+    useApp.mockReturnValue({ toast: { msg: 'Something went wrong', icon: '❌', visible: true } });
+    render(<Toast />);
+    expect(screen.getByText('❌')).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+  });
+
+  it('renders warning icon correctly', () => {
+    useApp.mockReturnValue({ toast: { msg: 'Please fill in title', icon: '⚠️', visible: true } });
+    render(<Toast />);
+    expect(screen.getByText('⚠️')).toBeInTheDocument();
+  });
 });

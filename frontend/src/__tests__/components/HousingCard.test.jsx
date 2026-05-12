@@ -74,4 +74,29 @@ describe('HousingCard', () => {
     render(<HousingCard h={mockHousing} onClick={vi.fn()} />);
     expect(screen.getByText('Apartments')).toBeInTheDocument();
   });
+
+  it('renders second amenity chip', () => {
+    render(<HousingCard h={mockHousing} onClick={vi.fn()} />);
+    expect(screen.getByText('Good maintenance')).toBeInTheDocument();
+  });
+
+  it('renders the image carousel', () => {
+    render(<HousingCard h={mockHousing} onClick={vi.fn()} />);
+    expect(screen.getByTestId('carousel')).toBeInTheDocument();
+  });
+
+  it('renders correct rent range format with $ and comma separators', () => {
+    render(<HousingCard h={mockHousing} onClick={vi.fn()} />);
+    expect(screen.getByText('$1,200 – $2,500')).toBeInTheDocument();
+  });
+
+  it('does not render bus routes that are not in the data', () => {
+    render(<HousingCard h={mockHousing} onClick={vi.fn()} />);
+    expect(screen.queryByText('PVTA #99')).not.toBeInTheDocument();
+  });
+
+  it('renders /mo label next to rent range', () => {
+    render(<HousingCard h={mockHousing} onClick={vi.fn()} />);
+    expect(screen.getByText('/mo')).toBeInTheDocument();
+  });
 });

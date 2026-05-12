@@ -35,6 +35,7 @@ export default function Marketplace() {
   const [search, setSearch] = useState('');
   const [priceFilter, setPriceFilter] = useState('');
   const [condFilter, setCondFilter] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
 
   // selectedItem: null when no detail modal is open.
   const [selectedItem, setSelectedItem] = useState(null);
@@ -54,6 +55,11 @@ export default function Marketplace() {
     // Condition exact-match.
     if (condFilter && m.condition !== condFilter) return false;
     return true;
+  }).sort((a, b) => {
+    if (sortBy === 'price_asc')  return a.price - b.price;
+    if (sortBy === 'price_desc') return b.price - a.price;
+    // newest: fallback to id or createdAt
+    return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
   return (
@@ -103,6 +109,11 @@ export default function Marketplace() {
             <option value="Like New">Like New</option>
             <option value="Good">Good</option>
             <option value="Fair">Fair</option>
+          </select>
+          <select className="form-select w-auto" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            <option value="newest">↓ Newest</option>
+            <option value="price_asc">↑ Price: Low to High</option>
+            <option value="price_desc">↓ Price: High to Low</option>
           </select>
         </div>
       </div>
