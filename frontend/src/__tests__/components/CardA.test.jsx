@@ -94,4 +94,33 @@ describe('CardA', () => {
     render(<CardA item={mockItem} onClick={vi.fn()} />);
     expect(screen.getByText('JD')).toBeInTheDocument();
   });
+
+  it('displays Free when price is 0', () => {
+    render(<CardA item={{ ...mockItem, price: 0 }} onClick={vi.fn()} />);
+    expect(screen.getByText('Free')).toBeInTheDocument();
+    expect(screen.queryByText('$0')).not.toBeInTheDocument();
+  });
+
+  it('renders In-talk status badge', () => {
+    render(<CardA item={{ ...mockItem, status: 'In-talk' }} onClick={vi.fn()} />);
+    expect(screen.getByText('In-talk')).toBeInTheDocument();
+  });
+
+  it('does not call onClick when save button is clicked', () => {
+    const handleClick = vi.fn();
+    useApp.mockReturnValue({ favoriteIds: new Set(), toggleFavorite: vi.fn() });
+    render(<CardA item={mockItem} onClick={handleClick} />);
+    fireEvent.click(screen.getByText('♡'));
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('renders rating with one decimal place', () => {
+    render(<CardA item={{ ...mockItem, owner: { name: 'John Doe', avgRating: 4 } }} onClick={vi.fn()} />);
+    expect(screen.getByText('⭐ 4.0')).toBeInTheDocument();
+  });
+
+  it('renders single initial for single-word owner name', () => {
+    render(<CardA item={{ ...mockItem, owner: { name: 'Alice', avgRating: 4.5 } }} onClick={vi.fn()} />);
+    expect(screen.getByText('A')).toBeInTheDocument();
+  });
 });
