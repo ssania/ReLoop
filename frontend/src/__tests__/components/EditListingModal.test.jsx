@@ -182,4 +182,54 @@ describe('EditListingModal — save behaviour', () => {
     fireEvent.click(document.querySelector('.btn-close'));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('closes modal when backdrop is clicked', () => {
+    const { onClose } = setup();
+    // The outermost modal div is the backdrop
+    fireEvent.click(document.querySelector('.modal'));
+    expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe('EditListingModal — condition and status pills', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it('renders all four condition pills', () => {
+    setup();
+    expect(screen.getByText('New')).toBeInTheDocument();
+    expect(screen.getByText('Like New')).toBeInTheDocument();
+    expect(screen.getByText('Good')).toBeInTheDocument();
+    expect(screen.getByText('Fair')).toBeInTheDocument();
+  });
+
+  it('renders all three status pills', () => {
+    setup();
+    expect(screen.getByText('Available')).toBeInTheDocument();
+    expect(screen.getByText('In-talk')).toBeInTheDocument();
+    expect(screen.getByText('Sold')).toBeInTheDocument();
+  });
+
+  it('pre-selects the correct condition from item prop', () => {
+    setup();
+    // Good is the item's condition — it should have the "on" class
+    expect(screen.getByText('Good').className).toContain('on');
+  });
+
+  it('hides buyer email field when status is Available', () => {
+    setup();
+    expect(screen.queryByPlaceholderText('buyer@umass.edu')).not.toBeInTheDocument();
+  });
+
+  it('hides buyer email field when status switches back from Sold', () => {
+    setup();
+    fireEvent.click(screen.getByText('Sold'));
+    expect(screen.getByPlaceholderText('buyer@umass.edu')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Available'));
+    expect(screen.queryByPlaceholderText('buyer@umass.edu')).not.toBeInTheDocument();
+  });
+
+  it('renders the modal title', () => {
+    setup();
+    expect(screen.getByText('Edit listing')).toBeInTheDocument();
+  });
 });
