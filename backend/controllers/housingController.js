@@ -5,10 +5,15 @@
 const HousingModel = require('../models/Housing');
 
 // GET /api/housing
-// Returns the full housing neighbourhood array as JSON.
-const getHousing = (req, res) => {
-  const housing = HousingModel.getAll();
-  res.json(housing);
+// Returns all housing areas with their reviews as JSON.
+const getHousing = async (req, res) => {
+  try {
+    const housing = await HousingModel.getAll();
+    res.json(housing);
+  } catch (err) {
+    console.error('Failed to fetch housing:', err);
+    res.status(500).json({ message: 'Failed to fetch housing' });
+  }
 };
 
 module.exports = { getHousing };

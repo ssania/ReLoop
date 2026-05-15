@@ -12,22 +12,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import CardA from '../components/CardA';
 import DetailModal from '../components/DetailModal';
 
 export default function Home() {
-  // listings comes from AppContext so newly created items appear here too.
   const { listings } = useApp();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  function goToMarketplace() {
+    navigate(user ? '/marketplace' : '/login');
+  }
 
   // selectedItem: null when no modal is open; set to a listing object to open DetailModal.
   const [selectedItem, setSelectedItem] = useState(null);
-
-  // Static platform stats shown in the stats row below the hero.
-  const stats = [
-    ['6', 'Neighborhoods'], ['1,240', 'Marketplace items'],
-    ['3,800+', 'Verified students'], ['×5', 'Colleges'],
-  ];
 
   return (
     <>
@@ -60,7 +59,7 @@ export default function Home() {
           {/* Primary CTA buttons – navigate to the two main sections. */}
           <div className="d-flex flex-wrap gap-3 mb-5">
             <button className="btn btn-dark rounded-3 px-4 py-2" style={{ fontSize: '14px' }} onClick={() => navigate('/housing')}>Explore housing areas</button>
-            <button className="btn btn-outline-secondary rounded-3 px-4 py-2 bg-white" style={{ fontSize: '14px', borderColor: 'var(--border)', color: 'var(--ink)' }} onClick={() => navigate('/marketplace')}>Browse marketplace</button>
+            <button className="btn btn-outline-secondary rounded-3 px-4 py-2 bg-white" style={{ fontSize: '14px', borderColor: 'var(--border)', color: 'var(--ink)' }} onClick={goToMarketplace}>Browse marketplace</button>
           </div>
 
           <hr style={{ borderColor: 'var(--sand3)', marginBottom: 'clamp(28px,4vw,40px)' }} />
@@ -70,11 +69,11 @@ export default function Home() {
           <div className="row g-3">
             {[
               { to: '/housing', stripe: 'var(--sage)', icon: '🏘️', tag: 'Public · No login needed', title: 'Housing Hub', desc: 'Rent ranges, amenities, floor plans, and PVTA bus routes by neighborhood. A research guide for students apartment hunting.', pillBg: 'var(--sage-bg)', pillColor: 'var(--sage)', pillBd: 'var(--sage-bd)', pillText: 'Open to everyone' },
-              { to: '/marketplace', stripe: 'var(--terra)', icon: '🏷️', tag: '@umass.edu required', title: 'Student Marketplace', desc: 'Buy and sell furniture, textbooks, electronics. Track status from Available to In-talk to Sold. Every seller is verified.', pillBg: 'var(--terra-bg)', pillColor: 'var(--terra)', pillBd: 'var(--terra-bd)', pillText: 'Verified students only' },
+              { to: null, stripe: 'var(--terra)', icon: '🏷️', tag: '@umass.edu required', title: 'Student Marketplace', desc: 'Buy and sell furniture, textbooks, electronics. Track status from Available to In-talk to Sold. Every seller is verified.', pillBg: 'var(--terra-bg)', pillColor: 'var(--terra)', pillBd: 'var(--terra-bd)', pillText: 'Verified students only' },
             ].map(s => (
               <div key={s.title} className="col-12 col-md-6">
                 {/* .svc-card applies cursor:pointer + hover lift animation. */}
-                <div className="svc-card card border h-100 p-4 position-relative overflow-hidden" style={{ borderRadius: '14px' }} onClick={() => navigate(s.to)}>
+                <div className="svc-card card border h-100 p-4 position-relative overflow-hidden" style={{ borderRadius: '14px' }} onClick={() => s.to ? navigate(s.to) : goToMarketplace()}>
                   {/* Coloured accent stripe at the top of the card. */}
                   <div className="svc-stripe" style={{ background: s.stripe }}></div>
                   <div className="d-flex align-items-center justify-content-center rounded-3 mb-3" style={{ width: '40px', height: '40px', background: s.pillBg, fontSize: '18px' }}>{s.icon}</div>
@@ -90,44 +89,30 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── STATS ROW ──────────────────────────────────────────────────────────
-          4 equal-width columns with g-0 (no gutter) and border-end dividers.
-          The last column uses the conditional class to skip the trailing border. */}
-      <div className="bg-white border-top">
-        <div className="row g-0">
-          {stats.map(([n, l], i) => (
-            <div key={l} className={`col-6 col-md-3 py-3 px-4${i < 3 ? ' border-end' : ''}`}>
-              <div style={{ fontFamily: 'Syne,sans-serif', fontSize: '24px', fontWeight: 800, letterSpacing: '-.8px' }}>{n}</div>
-              <div style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '3px' }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* ── RECENT LISTINGS ────────────────────────────────────────────────────
-          Shows only the first 3 listings (slice(0,3)) as a preview.
-          Clicking a card sets selectedItem → opens DetailModal.                 */}
-      <div className="py-5 px-4" style={{ background: 'var(--sand)' }}>
-        <div style={{ maxWidth: '1160px', margin: '0 auto' }}>
-          <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-            <div>
-              <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '11px', letterSpacing: '1.5px', color: 'var(--muted)' }}>Fresh on the market</div>
-              <div style={{ fontFamily: 'Syne,sans-serif', fontSize: 'clamp(16px,3vw,22px)', fontWeight: 800, letterSpacing: '-.5px' }}>Recent listings</div>
-            </div>
-            {/* "View all" navigates to the full Marketplace page. */}
-            <button className="btn btn-outline-secondary rounded-3 bg-white" style={{ fontSize: '12px', padding: '9px 18px', borderColor: 'var(--border)', color: 'var(--ink)' }} onClick={() => navigate('/marketplace')}>
-              View all →
-            </button>
-          </div>
-          <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
-            {listings.slice(0, 3).map(item => (
-              <div key={item.id} className="col">
-                <CardA item={item} onClick={setSelectedItem} />
+      {/* ── RECENT LISTINGS — visible only when logged in ──────────────────── */}
+      {user && (
+        <div className="py-5 px-4" style={{ background: 'var(--sand)' }}>
+          <div style={{ maxWidth: '1160px', margin: '0 auto' }}>
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+              <div>
+                <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: '11px', letterSpacing: '1.5px', color: 'var(--muted)' }}>Fresh on the market</div>
+                <div style={{ fontFamily: 'Syne,sans-serif', fontSize: 'clamp(16px,3vw,22px)', fontWeight: 800, letterSpacing: '-.5px' }}>Recent listings</div>
               </div>
-            ))}
+              <button className="btn btn-outline-secondary rounded-3 bg-white" style={{ fontSize: '12px', padding: '9px 18px', borderColor: 'var(--border)', color: 'var(--ink)' }} onClick={goToMarketplace}>
+                View all →
+              </button>
+            </div>
+            <div className="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+              {listings.slice(0, 3).map(item => (
+                <div key={item.id} className="col">
+                  <CardA item={item} onClick={setSelectedItem} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Page footer – only appears on the Home page. */}
       <footer>

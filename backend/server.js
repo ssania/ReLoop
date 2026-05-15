@@ -1,34 +1,61 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-// const connectDB = require('./config/db'); // Uncomment when MONGO_URI is ready
+const connectDB = require('./config/db');
+
+// ✅ NEW: import logger
+const logger = require('./logger');
 
 dotenv.config();
 
 const app = express();
 
-// Connect to MongoDB (uncomment when MONGO_URI is configured in .env)
-// connectDB();
+connectDB();
 
 // ── Middleware ─────────────────────────────────────────────────────────────────
-// cors() allows the React dev server (localhost:5173) to call this API.
-// Without this the browser would block cross-origin requests.
 app.use(cors());
-
-// express.json() parses incoming JSON request bodies (needed for POST /api/listings).
 app.use(express.json());
 
+// ✅ NEW: Logging middleware (ADD HERE)
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on("finish", () => {
+    logger.info({
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      latency: Date.now() - start,
+    });
+  });
+
+  next();
+});
+
 // ── Routes ─────────────────────────────────────────────────────────────────────
-// Each router handles a resource. Prefix all API routes with /api/ so they are
-// clearly separated from any static file serving added later.
+app.use('/api/auth',     require('./routes/authRoutes'));
 app.use('/api/listings', require('./routes/listingRoutes'));
 app.use('/api/housing',  require('./routes/housingRoutes'));
 app.use('/api/reviews',  require('./routes/reviewRoutes'));
+app.use('/api/favorites', require('./routes/favoriteRoutes'));
 
-// Health-check endpoint – useful for confirming the server is up.
-app.get('/', (req, res) => {
-  res.json({ message: 'ReLoop API is running' });
+// ✅ ADD HERE
+app.get("/test-500", (req, res) => {
+  res.status(500).send("Test 500 error");
 });
+
+// ── Serve frontend in production ───────────────────────────────────────────────
+const path = require('path');
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({ message: 'ReLoop API is running' });
+  });
+}
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

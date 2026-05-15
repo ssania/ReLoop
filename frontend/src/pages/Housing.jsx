@@ -28,8 +28,14 @@ export default function Housing() {
   const [rentFilter, setRentFilter] = useState('');
   const [busFilter, setBusFilter] = useState('');
 
-  // selectedH: null when no modal is open; set to a housing object to open HousingDetailModal.
-  const [selectedH, setSelectedH] = useState(null);
+  // Derive unique bus routes from all housing areas, sorted.
+  const allBusRoutes = [...new Set(housing.flatMap(h => h.busRoutes ?? []))].sort();
+
+  // selectedH: id of the housing area whose modal is open (null = closed).
+  // We store the id rather than the object so the modal always reads the
+  // latest version from context (e.g. after a review is posted).
+  const [selectedId, setSelectedId] = useState(null);
+  const selectedH = selectedId != null ? housing.find(h => h.id === selectedId) ?? null : null;
 
   // isMap: true when the "Map view" tab is active.
   // In map view the grid is replaced by the placeholder map; filters still apply
@@ -38,10 +44,10 @@ export default function Housing() {
 
   // Derived list: apply all active filters to the housing array.
   const list = housing.filter(h => {
-    // "Close to campus" tab: rentMin threshold acts as a proxy for proximity.
-    if (activeTab === 'close' && h.rentMin > 1200) return false;
-    // "Budget friendly" tab: only show the most affordable areas.
-    if (activeTab === 'budget' && h.rentMin > 950) return false;
+    // "Close to campus" tab: only areas within 2 miles of campus.
+    if (activeTab === 'close' && h.distance >= 2) return false;
+    // "Budget friendly" tab: only areas whose starting rent is ≤ $1,950/mo.
+    if (activeTab === 'budget' && h.rentMin > 1950) return false;
     // Text search: case-insensitive match against name and description.
     if (search && !h.name.toLowerCase().includes(search.toLowerCase()) && !h.description.toLowerCase().includes(search.toLowerCase())) return false;
     // Rent filter: hide areas whose starting rent exceeds the selected ceiling.
@@ -86,13 +92,12 @@ export default function Housing() {
             <option value="1400">Under $1,400/mo</option>
             <option value="2000">Under $2,000/mo</option>
           </select>
-          {/* PVTA bus route filter. */}
+          {/* PVTA bus route filter — options derived from live housing data. */}
           <select className="form-select w-auto" value={busFilter} onChange={e => setBusFilter(e.target.value)}>
             <option value="">Any bus</option>
-            <option value="30">PVTA #30</option>
-            <option value="31">PVTA #31</option>
-            <option value="33">PVTA #33</option>
-            <option value="45">PVTA #45</option>
+            {allBusRoutes.map(route => (
+              <option key={route} value={route.replace(/[^0-9]/g, '')}>{route}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -111,24 +116,17 @@ export default function Housing() {
 
           {/* Conditional rendering: map view vs. card grid vs. empty state. */}
           {isMap ? (
-            // Map placeholder – decorative static map with pin elements.
-            // Full Google Maps embed is planned for the live version.
-            <div className="rounded-4 position-relative d-flex align-items-center justify-content-center overflow-hidden"
-              style={{ background: 'linear-gradient(135deg,#e8f0e8,#d0e0d0)', height: '400px', border: '1px solid var(--sage-bd)' }}>
-              {/* Four neighbourhood pins at hardcoded positions. */}
-              <div className="hdm-map-pin" style={{ top: '35%', left: '38%' }}></div>
-              <div className="hdm-map-pin umass" style={{ top: '50%', left: '55%' }}></div>
-              <div className="hdm-map-pin" style={{ top: '25%', left: '58%' }}></div>
-              <div className="hdm-map-pin" style={{ top: '65%', left: '30%' }}></div>
-              <div className="text-center p-3 rounded-3" style={{ background: 'rgba(255,255,255,.85)' }}>
-                <div className="fw-medium" style={{ fontSize: '13px', color: 'var(--sage)' }}>🗺️ Interactive map</div>
-                <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '3px' }}>Google Maps integration – click a pin to explore</div>
-              </div>
-              {/* Legend. */}
-              <div className="position-absolute bottom-0 start-0 m-3 p-2 rounded-2 bg-white" style={{ fontSize: '10px' }}>
-                <div className="d-flex align-items-center gap-2 mb-1"><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--terra)' }}></div>Neighborhood</div>
-                <div className="d-flex align-items-center gap-2"><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sage)' }}></div>UMass / Landmark</div>
-              </div>
+            <div className="rounded-4 overflow-hidden" style={{ border: '1px solid var(--sage-bd)', height: 'clamp(320px, 60vw, 560px)' }}>
+              <iframe
+                src="https://www.google.com/maps/d/u/2/embed?mid=1-7NpzrhOpkdd8txIGiWzG0sX9-DbT2Q&ehbc=2E312F"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="UMass Amherst neighborhoods map"
+              />
             </div>
           ) : list.length ? (
             // Card grid – responsive columns: 1 on mobile, 2 on sm, 3 on xl.
@@ -136,7 +134,7 @@ export default function Housing() {
               {list.map(h => (
                 <div key={h.id} className="col">
                   {/* Clicking a card sets selectedH → opens HousingDetailModal. */}
-                  <HousingCard h={h} onClick={setSelectedH} />
+                  <HousingCard h={h} onClick={h => setSelectedId(h.id)} />
                 </div>
               ))}
             </div>
@@ -152,7 +150,7 @@ export default function Housing() {
       </div>
 
       {/* HousingDetailModal mounts only when selectedH is not null. */}
-      {selectedH && <HousingDetailModal h={selectedH} onClose={() => setSelectedH(null)} />}
+      {selectedH && <HousingDetailModal h={selectedH} onClose={() => setSelectedId(null)} />}
     </>
   );
 }
